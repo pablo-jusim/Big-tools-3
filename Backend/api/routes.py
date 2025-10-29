@@ -4,8 +4,8 @@ Define las rutas de la API del sistema experto.
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from api.base_conocimiento import BaseConocimiento
-from api.engine import MotorInferencia
+from Backend.api.base_conocimiento import BaseConocimiento
+from Backend.api.engine import MotorInferencia
 
 # ---------------------------------------------------------------------
 # Inicialización

@@ -5,7 +5,7 @@ Clase para gestionar la base de conocimientos de máquinas (en formato árbol de
 
 from typing import Dict, Any, List, Optional
 import json
-from nodo import Nodo
+from Backend.api.nodo import Nodo
 
 
 JSON_LATEST = 1

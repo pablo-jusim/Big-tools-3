@@ -4,9 +4,9 @@ Motor de inferencia del sistema experto de diagnóstico de máquinas.
 """
 
 from typing import Optional, List
-from api.base_conocimiento import BaseConocimiento
-from api.nodo import Nodo
-from api.response import Response, ChoiceResponse
+from Backend.api.base_conocimiento import BaseConocimiento
+from Backend.api.nodo import Nodo
+from Backend.api.response import Response, ChoiceResponse
 
 
 class MotorInferencia:
