@@ -1,26 +1,30 @@
 """
 base_conocimiento.py
 Clase para gestionar la base de conocimientos de máquinas (en formato árbol de objetos Nodo o JSON)
+Adaptado al flujo de categorías dentro de cada máquina.
 """
 
 from typing import Dict, Any, List, Optional
 import json
+from pathlib import Path
 from Backend.api.nodo import Nodo
 
-
 JSON_LATEST = 1
+DEFAULT_JSON = "Backend/data/base_conocimiento.json"  # ruta por defecto al JSON
 
 
 class BaseConocimiento:
     """
     Clase principal de la base de conocimientos para el sistema experto.
-    Gestiona la carga, almacenamiento y expansión de la base desde archivos JSON.
+    Gestiona la carga, almacenamiento y consulta de la base desde archivos JSON.
+    Ahora con soporte de categorías por máquina.
     """
 
-    def __init__(self):
+    def __init__(self, archivo_json: str = DEFAULT_JSON):
         self.description = "Base de conocimientos de máquinas"
-        # Diccionario principal que contiene todas las máquinas (como árboles de Nodos)
-        self.maquinas: Dict[str, Nodo] = {}
+        # Diccionario principal: nombre de la máquina → lista de categorías (cada una con un Nodo raíz)
+        self.maquinas: Dict[str, List[Nodo]] = {}
+        self.from_json(archivo_json)  # carga automática al instanciar
 
     # -------------------------------------------------------------------------
     # MÉTODOS DE CARGA Y GUARDADO
@@ -29,8 +33,13 @@ class BaseConocimiento:
     def from_json(self, filename: str):
         """
         Carga una base de conocimientos desde un archivo JSON.
-        Convierte cada máquina en una estructura de objetos Nodo.
+        Convierte cada máquina y sus categorías en estructuras de objetos Nodo.
         """
+        path = Path(filename)
+        if not path.exists():
+            print(f"Archivo {filename} no encontrado")
+            return self
+
         with open(filename, 'r', encoding='utf8') as f:
             data = json.load(f)
 
@@ -38,13 +47,17 @@ class BaseConocimiento:
             raise ValueError("Actualizar JSON a nueva versión")
 
         self.description = data.get("description", self.description)
-
-        # Cargar los árboles de máquinas como Nodos
         self.maquinas = {}
-        for entry in data.get("entries", []):
-            nombre = entry["name"]
-            estructura = entry["tree"]
-            self.maquinas[nombre] = Nodo.from_dict(estructura)
+
+        for nombre_maquina, info_maquina in data.items():
+            if nombre_maquina == "__v" or nombre_maquina == "description":
+                continue
+            categorias = info_maquina.get("categorias", [])
+            lista_nodos = []
+            for cat in categorias:
+                nodo_categoria = Nodo.from_dict(cat)
+                lista_nodos.append(nodo_categoria)
+            self.maquinas[nombre_maquina] = lista_nodos
 
         return self
 
@@ -55,15 +68,13 @@ class BaseConocimiento:
         """
         obj = {
             "__v": JSON_LATEST,
-            "description": self.description,
-            "entries": []
+            "description": self.description
         }
 
-        for nombre, nodo_raiz in self.maquinas.items():
-            obj["entries"].append({
-                "name": nombre,
-                "tree": nodo_raiz.to_dict()
-            })
+        for nombre_maquina, lista_categorias in self.maquinas.items():
+            obj[nombre_maquina] = {
+                "categorias": [n.to_dict() for n in lista_categorias]
+            }
 
         data = json.dumps(obj, indent=2, ensure_ascii=False)
         with open(filename, 'w', encoding='utf8') as f:
@@ -71,46 +82,43 @@ class BaseConocimiento:
         return data
 
     # -------------------------------------------------------------------------
-    # MÉTODOS DE CONSULTA Y EXPANSIÓN
+    # MÉTODOS DE CONSULTA
     # -------------------------------------------------------------------------
 
     def listar_maquinas(self) -> List[str]:
         """Devuelve una lista de todas las máquinas registradas en la base."""
         return list(self.maquinas.keys())
 
-    def get_arbol(self, nombre_maquina: str) -> Optional[Nodo]:
-        """Devuelve el nodo raíz (árbol) de una máquina específica, o None si no existe."""
-        return self.maquinas.get(nombre_maquina)
+    def listar_categorias(self, nombre_maquina: str) -> List[str]:
+        """Devuelve la lista de categorías de una máquina específica."""
+        categorias = self.maquinas.get(nombre_maquina)
+        if not categorias:
+            return []
+        return [cat.nombre for cat in categorias]
 
-    def agregar_maquina(self, nombre_maquina: str, nodo_raiz: Nodo):
+    def get_arbol_categoria(self, nombre_maquina: str, categoria: str) -> Optional[Nodo]:
+        """Devuelve el nodo raíz de una categoría específica dentro de una máquina."""
+        categorias = self.maquinas.get(nombre_maquina)
+        if not categorias:
+            return None
+        nodo_categoria = next((c for c in categorias if c.nombre == categoria), None)
+        return nodo_categoria
+
+    def agregar_maquina(self, nombre_maquina: str, lista_categorias: List[Nodo]):
         """
-        Agrega una nueva máquina completa a la base.
-        :param nombre_maquina: Nombre único de la máquina
-        :param nodo_raiz: Nodo raíz del árbol de conocimiento
+        Agrega una nueva máquina completa a la base con sus categorías.
         """
         if nombre_maquina in self.maquinas:
             raise ValueError(f"La máquina '{nombre_maquina}' ya existe en la base.")
-        self.maquinas[nombre_maquina] = nodo_raiz
+        self.maquinas[nombre_maquina] = lista_categorias
 
-    def agregar_rama(self, nombre_maquina: str, ruta: List[str], nueva_rama: Nodo):
+    def agregar_categoria(self, nombre_maquina: str, nodo_categoria: Nodo):
         """
-        Agrega una nueva rama (Nodo) dentro del árbol existente.
-        :param nombre_maquina: Nombre de la máquina
-        :param ruta: Lista de nombres de nodos hasta el punto de inserción
-        :param nueva_rama: Nodo a insertar
+        Agrega una nueva categoría a una máquina existente.
         """
-        arbol = self.get_arbol(nombre_maquina)
-        if not arbol:
-            raise ValueError(f"No se encontró la máquina '{nombre_maquina}' en la base.")
-
-        nodo_actual = arbol
-        for nivel in ruta:
-            nodo_hijo = next((r for r in nodo_actual.ramas if r.nombre == nivel), None)
-            if not nodo_hijo:
-                raise ValueError(f"No se encontró el nodo '{nivel}' en la ruta especificada.")
-            nodo_actual = nodo_hijo
-
-        nodo_actual.ramas.append(nueva_rama)
+        if nombre_maquina not in self.maquinas:
+            raise ValueError(f"No se encontró la máquina '{nombre_maquina}'.")
+        self.maquinas[nombre_maquina].append(nodo_categoria)
 
     # -------------------------------------------------------------------------
     # FUTURAS AMPLIACIONES (IA / EDICIÓN DE USUARIO)

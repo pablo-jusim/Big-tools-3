@@ -3,7 +3,7 @@ routes.py
 Define las rutas de la API del sistema experto.
 """
 
-from fastapi import APIRouter, HTTPException, Query, Body
+from fastapi import APIRouter, HTTPException, Body
 from Backend.api.auth import validar_usuario
 from Backend.api.base_conocimiento import BaseConocimiento
 from Backend.api.engine import MotorInferencia
@@ -16,9 +16,10 @@ router = APIRouter(prefix="/api", tags=["Sistema Experto"])
 
 # Instancias globales
 base = BaseConocimiento()
-motor = MotorInferencia(base)
+motor_global = MotorInferencia(base)
 
-# Diccionario para almacenar sesiones activas por máquina (puede adaptarse según usuario si se quiere)
+# Diccionario para almacenar sesiones activas por máquina+categoria
+# Clave: "nombre_maquina|categoria"
 sesiones = {}
 
 # ---------------------------------------------------------------------
@@ -27,9 +28,7 @@ sesiones = {}
 
 @router.get("/")
 def home():
-    """
-    Ruta base de la API.
-    """
+    """Ruta base de la API."""
     return {"mensaje": "API del Sistema Experto activa"}
 
 
@@ -42,50 +41,56 @@ def login(username: str = Body(...), password: str = Body(...)):
 
 @router.get("/maquinas")
 def listar_maquinas():
-    """
-    Lista todas las máquinas disponibles en la base de conocimiento.
-    """
+    """Lista todas las máquinas disponibles en la base de conocimiento."""
     maquinas = base.listar_maquinas()
     return {"maquinas": maquinas}
 
 
-@router.post("/diagnosticar/iniciar/{nombre_maquina}")
-def iniciar_diagnostico(nombre_maquina: str):
+@router.get("/categorias/{nombre_maquina}")
+def listar_categorias(nombre_maquina: str):
+    """Devuelve las categorías disponibles para una máquina específica."""
+    categorias = base.listar_categorias(nombre_maquina)
+    return {"categorias": categorias}
+
+
+@router.post("/diagnosticar/iniciar/{nombre_maquina}/{categoria}")
+def iniciar_diagnostico(nombre_maquina: str, categoria: str):
     """
-    Inicia el diagnóstico de una máquina específica.
-    Devuelve la primera pregunta u opciones para que el frontend la muestre.
+    Inicia el diagnóstico de una máquina específica para la categoría seleccionada.
+    Devuelve la primera pregunta u opciones para el frontend.
     """
     try:
-        motor.iniciar_diagnostico(nombre_maquina)
-        nodo_actual = motor.nodo_actual
-        if nodo_actual is None:
-            return {"mensaje": "No se encontró una falla inicial."}
+        motor = MotorInferencia(base)
+        
+        # Paso 1: Iniciar el motor (carga categorías de la máquina)
+        motor.iniciar_diagnostico(nombre_maquina) 
+        
+        # Paso 2: Seleccionar la categoría (obtiene la 1ra pregunta o resultado)
+        # !! ESTE ES EL PASO CRÍTICO QUE FALTABA !!
+        resultado = motor.seleccionar_categoria(categoria) 
 
-        # Guardamos la sesión
-        sesiones[nombre_maquina] = motor
+        # Guardamos la sesión por máquina + categoría
+        key = f"{nombre_maquina}|{categoria}"
+        sesiones[key] = motor
 
-        # Retornamos pregunta y opciones si las hay
-        if nodo_actual.pregunta:
-            return {
-                "pregunta": nodo_actual.pregunta,
-                "opciones": [r.nombre for r in nodo_actual.ramas] if nodo_actual.ramas else []
-            }
-        else:
-            return {"mensaje": "Nodo sin pregunta, continuar automáticamente."}
+        # Retornamos el resultado del Paso 2
+        return resultado
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/diagnosticar/avanzar/{nombre_maquina}")
-def avanzar_diagnostico(nombre_maquina: str, respuesta: str = Query(..., description="Respuesta del usuario")):
+@router.post("/diagnosticar/avanzar/{nombre_maquina}/{categoria}")
+def avanzar_diagnostico(nombre_maquina: str, categoria: str, respuesta: str = Body(..., embed=True)):
     """
     Avanza un paso en el árbol de diagnóstico según la respuesta del usuario.
     Devuelve la siguiente pregunta u opciones, o la falla y soluciones si se llegó a un nodo hoja.
     """
-    motor = sesiones.get(nombre_maquina)
+    key = f"{nombre_maquina}|{categoria}"
+    motor = sesiones.get(key)
+
     if motor is None:
-        raise HTTPException(status_code=404, detail="No se encontró una sesión activa para esta máquina.")
+        raise HTTPException(status_code=404, detail="No se encontró una sesión activa para esta máquina y categoría.")
 
     resultado = motor.avanzar(respuesta)
     return resultado

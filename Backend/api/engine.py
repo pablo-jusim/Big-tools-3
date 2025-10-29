@@ -1,19 +1,19 @@
 """
 engine.py
 Motor de inferencia del sistema experto de diagnóstico de máquinas.
+Adaptado a flujo de categorías y opciones fijas.
+Compatible con BaseConocimiento y Nodo actuales.
 """
 
 from typing import Optional, List
 from Backend.api.base_conocimiento import BaseConocimiento
 from Backend.api.nodo import Nodo
-from Backend.api.response import Response, ChoiceResponse
-from Backend.api.preprocesamiento import limpiar_texto, similitud_rapida
 
 
 class MotorInferencia:
     """
     Motor que recorre el árbol de conocimiento de una máquina,
-    procesando respuestas binarias o de selección múltiple,
+    procesando respuestas de selección múltiple,
     hasta detectar la falla y ofrecer posibles soluciones.
     """
 
@@ -21,6 +21,7 @@ class MotorInferencia:
         self.base = base
         self.resultado: Optional[Nodo] = None
         self.maquina_actual: Optional[str] = None
+        self.categorias: List[Nodo] = []
         self.nodo_actual: Optional[Nodo] = None
         self.ruta: List[Nodo] = []
 
@@ -28,106 +29,151 @@ class MotorInferencia:
     # MÉTODOS PRINCIPALES
     # -------------------------------------------------------------------------
 
-    def iniciar_diagnostico(self, nombre_maquina: str) -> Nodo:
+    def iniciar_diagnostico(self, nombre_maquina: str) -> dict:
         """
         Inicializa el diagnóstico para una máquina.
-        :param nombre_maquina: Nombre de la máquina a diagnosticar
-        :return: Nodo inicial para comenzar el recorrido
+        Devuelve la lista de categorías disponibles.
         """
         self.maquina_actual = nombre_maquina
-        nodo_raiz = self.base.get_arbol(nombre_maquina)
+        self.categorias = self.base.maquinas.get(nombre_maquina, [])
 
-        if not nodo_raiz:
-            raise ValueError(f"No se encontró la máquina '{nombre_maquina}' en la base de conocimiento.")
+        if not self.categorias:
+            raise ValueError(f"No hay categorías disponibles para la máquina '{nombre_maquina}'.")
 
-        self.nodo_actual = nodo_raiz
-        self.ruta = [nodo_raiz]
-        return nodo_raiz
+        self.resultado = None
+        self.nodo_actual = None
+        self.ruta = []
 
-def avanzar(self, respuesta: Optional[str] = None) -> dict:
-    """
-    Avanza en el árbol según la respuesta recibida.
-    :param respuesta: respuesta del usuario ('sí'/'no' o texto de selección)
-    :return: diccionario con la siguiente pregunta, opciones o resultado final
-    """
-    from Backend.api.preprocesamiento import limpiar_texto, similitud_rapida
+        # Retornamos las categorías para que el frontend las muestre
+        return {"categorias": [cat.nombre for cat in self.categorias]}
 
-    if not self.nodo_actual:
-        return {"error": "No se ha iniciado el diagnóstico. Use 'iniciar_diagnostico'."}
+    def seleccionar_categoria(self, categoria: str) -> dict:
+        """
+        Selecciona una categoría dentro de la máquina y devuelve la primera pregunta.
+        Añade lógica para "avanzar" si la categoría es solo un contenedor.
+        """
+        nodo = next((c for c in self.categorias if c.nombre == categoria), None)
+        if not nodo:
+            raise ValueError(f"No se encontró la categoría '{categoria}' en la máquina '{self.maquina_actual}'.")
 
-    nodo = self.nodo_actual
+        self.nodo_actual = nodo
+        self.ruta = [nodo]
 
-    # Caso hoja: fin del recorrido
-    if nodo.es_hoja():
-        self.resultado = nodo
-        return self._resultado_final(nodo)
+        # Si la categoría es un nodo hoja directo (ej: "El aparato no funciona")
+        if nodo.es_hoja():
+            self.resultado = nodo
+            return self._resultado_final(nodo)
+        
+        # Si el nodo de categoría NO tiene pregunta, pero SÍ tiene ramas,
+        # es un contenedor. Debemos avanzar automáticamente.
+        if not nodo.pregunta and nodo.ramas:
+            
+            # Caso 1: La categoría apunta a una falla directa 
+            # (Ej: "El aparato no funciona / no se pone en marcha")
+            if len(nodo.ramas) == 1 and nodo.ramas[0].es_hoja():
+                self.nodo_actual = nodo.ramas[0]
+                self.ruta.append(self.nodo_actual)
+                self.resultado = self.nodo_actual
+                return self._resultado_final(self.nodo_actual)
 
-    # Nodo con pregunta
-    if nodo.pregunta and nodo.ramas:
-        # Si es binario
-        if len(nodo.ramas) == 2 and all(limpiar_texto(r.nombre) in ("si", "no") for r in nodo.ramas):
-            if respuesta is None:
-                return {"pregunta": nodo.pregunta, "tipo": "binaria", "opciones": ["sí", "no"]}
+            # Caso 2: La categoría apunta a un nodo de pregunta 
+            # (Ej: "Una luz parpadea")
+            if len(nodo.ramas) == 1 and nodo.ramas[0].pregunta:
+                self.nodo_actual = nodo.ramas[0] # Avanzamos al nodo de la pregunta
+                self.ruta.append(self.nodo_actual)
+                # Ahora self.nodo_actual SÍ tiene la pregunta y las opciones correctas.
 
-            resp_enum = Response.YES if limpiar_texto(respuesta) in ("si", "s") else Response.NO
-            siguiente = next(
-                r for r in nodo.ramas
-                if (limpiar_texto(r.nombre) in ("si") and resp_enum == Response.YES)
-                or (limpiar_texto(r.nombre) == "no" and resp_enum == Response.NO)
-            )
+        # Retornamos la pregunta y opciones del nodo actual
+        # (que ahora es el nodo de pregunta correcto, no el de categoría)
+        return self._pregunta_actual()
 
-        # Selección múltiple o entrada libre
-        else:
-            if respuesta is None:
-                return {
-                    "pregunta": nodo.pregunta,
-                    "tipo": "multiple",
-                    "opciones": [r.nombre for r in nodo.ramas]
-                }
+    def avanzar(self, respuesta: str) -> dict:
+        """
+        Avanza un paso en el árbol según la opción seleccionada por el usuario.
+        """
+        if not self.nodo_actual:
+            return {"error": "No se ha seleccionado una categoría. Use 'seleccionar_categoria'."}
 
-            # Intentar emparejar usando similitud difusa
-            opciones_texto = [r.nombre for r in nodo.ramas]
-            mejor_coincidencia = similitud_rapida(respuesta, opciones_texto)
+        nodo = self.nodo_actual
 
-            if mejor_coincidencia:
-                siguiente = next(r for r in nodo.ramas if r.nombre == mejor_coincidencia)
-            else:
-                return {
-                    "mensaje": "No se pudo determinar la falla. Intenta con otra descripción.",
-                    "opciones": opciones_texto
-                }
+        # Buscar la rama correspondiente a la respuesta (nombre, atributo o categoria)
+        siguiente = next(
+            (r for r in nodo.ramas
+             if r.nombre == respuesta
+             or getattr(r, "atributo", None) == respuesta
+             or getattr(r, "categoria", None) == respuesta),
+            None
+        )
 
-        # Avanzar
+        if not siguiente:
+            # Opciones disponibles si no se encuentra la respuesta
+            opciones = [r.nombre or getattr(r, "atributo", "") or getattr(r, "categoria", "")
+                        for r in nodo.ramas]
+            return {
+                "mensaje": f"No se encontró la opción '{respuesta}'.",
+                "opciones": opciones
+            }
+
+        # Avanzar al siguiente nodo
         self.nodo_actual = siguiente
         self.ruta.append(siguiente)
-        return self.avanzar()  # Llamada recursiva para procesar siguiente paso
 
-    # Nodo sin pregunta pero con ramas (flujo automático)
-    elif nodo.ramas:
-        self.nodo_actual = nodo.ramas[0]
-        self.ruta.append(nodo.ramas[0])
-        return self.avanzar()
+        # Si llegamos a un nodo hoja, devolvemos el resultado final
+        if siguiente.es_hoja():
+            self.resultado = siguiente
+            return self._resultado_final(siguiente)
 
-    # Nodo sin ramas ni pregunta
-    self.resultado = nodo
-    return self._resultado_final(nodo)
+        # Si el nodo actual tiene pregunta y opciones
+        return self._pregunta_actual()
 
+    # -------------------------------------------------------------------------
+    # MÉTODOS AUXILIARES
+    # -------------------------------------------------------------------------
+
+    def _pregunta_actual(self) -> dict:
+        """
+        Devuelve la pregunta y las opciones del nodo actual.
+        """
+        nodo = self.nodo_actual
+        if nodo is None:
+            return {"mensaje": "No hay un nodo activo en el diagnóstico."}
+
+        # Determinar el texto de la pregunta
+        if nodo.pregunta:
+            texto_pregunta = nodo.pregunta
+        elif getattr(nodo, "categoria", None):
+            texto_pregunta = f"Elige una opción dentro de la categoría '{nodo.categoria}':"
+        elif nodo.nombre:
+            texto_pregunta = f"Selecciona una opción relacionada con '{nodo.nombre}':"
+        else:
+            texto_pregunta = "Selecciona una opción:"
+
+        # Generar lista de opciones (usa nombre, atributo o categoría)
+        opciones = []
+        if nodo.ramas:
+            for r in nodo.ramas:
+                if r.nombre:
+                    opciones.append(r.nombre)
+                elif getattr(r, "atributo", None):
+                    opciones.append(r.atributo)
+                elif getattr(r, "categoria", None):
+                    opciones.append(r.categoria)
+
+        return {
+            "pregunta": texto_pregunta,
+            "opciones": opciones
+        }
 
     def _resultado_final(self, nodo: Nodo) -> dict:
         """
         Devuelve el resultado final del diagnóstico.
         """
-        if nodo.falla:
-            return {
-                "maquina": self.maquina_actual,
-                "falla": nodo.falla,
-                "soluciones": nodo.soluciones
-            }
-        else:
-            return {
-                "maquina": self.maquina_actual,
-                "mensaje": "No se pudo determinar una falla con la información proporcionada."
-            }
+        return {
+            "maquina": self.maquina_actual,
+            "falla": nodo.falla,
+            "referencia": getattr(nodo, "referencia", None),
+            "soluciones": nodo.soluciones
+        }
 
     def reiniciar(self):
         """
@@ -136,4 +182,5 @@ def avanzar(self, respuesta: Optional[str] = None) -> dict:
         self.resultado = None
         self.nodo_actual = None
         self.maquina_actual = None
+        self.categorias = []
         self.ruta = []
