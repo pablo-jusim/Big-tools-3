@@ -92,20 +92,23 @@ body {
 }
 
 .chat-window {
-    height: 400px;
+    height: 500px;
     padding: 15px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     background-color: #f9f9f9;
+    scroll-behavior: smooth;
 }
 
+/* Animación suave para nuevos mensajes */
 .message {
-    padding: 10px 15px;
+    padding: 12px 16px;
     border-radius: var(--border-radius);
-    max-width: 70%;
+    max-width: 80%;
     word-wrap: break-word;
+    animation: fadeIn 0.3s ease;
 }
 
 .message.user {
@@ -120,54 +123,57 @@ body {
     color: var(--text-color);
 }
 
-/* Select dinámico de máquinas */
-#select-maquina {
-    margin: 10px 0;
-    padding: 8px 12px;
-    border-radius: var(--border-radius);
-    border: 1px solid #ccc;
-    font-size: 1rem;
-}
-
-#select-maquina + button {
-    margin-left: 5px;
-    padding: 8px 12px;
-    border-radius: var(--border-radius);
-    border: none;
-    background-color: var(--primary-color);
-    color: var(--text-color);
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-#select-maquina + button:hover {
-    background-color: #b71c1c;
-}
-
-.chat-form {
+/* ---------------------------
+   Botones dinámicos
+---------------------------- */
+.options-container {
     display: flex;
-    border-top: 1px solid #ddd;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+    align-self: flex-start;
 }
 
-.chat-form input[type="text"] {
-    flex-grow: 1;
-    padding: 10px 15px;
-    border: none;
-    font-size: 1rem;
-    outline: none;
+.option-btn {
+    background-color: #eeeeee;
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.25s ease;
 }
 
-.chat-form button {
+.option-btn:hover {
     background-color: var(--primary-color);
     color: var(--text-color);
-    border: none;
-    padding: 0 20px;
-    cursor: pointer;
-    transition: background 0.3s;
+    border-color: var(--primary-color);
+    transform: scale(1.05);
 }
 
-.chat-form button:hover {
+.option-btn:active {
     background-color: #b71c1c;
+    color: var(--text-color);
+    transform: scale(1);
+}
+
+/* Para mostrar los botones como si fueran parte del mensaje del bot */
+.bot-options {
+    align-self: flex-start;
+    background-color: #e0e0e0;
+    padding: 10px;
+    border-radius: var(--border-radius);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* ---------------------------
+   Animaciones
+---------------------------- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* ---------------------------
@@ -237,65 +243,19 @@ body {
     font-weight: bold;
 }
 
-/* ---------------------------
-   Panel de administración
----------------------------- */
-.admin-panel {
-    width: 100%;
-    max-width: 900px;
-    margin: 20px auto;
-    background-color: #fff;
-    border-radius: var(--border-radius);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    padding: 20px;
-}
 
-.admin-panel.hidden {
-    display: none;
-}
-
-.admin-buttons {
+.header-right {
     display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-    margin-bottom: 15px;
+    gap: 10px; /* Espacio entre los botones */
 }
 
-.admin-buttons button {
-    flex: 1;
-    min-width: 180px;
-    padding: 10px;
-    background-color: var(--primary-color);
-    color: var(--text-color);
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: background 0.3s;
+#reset-button {
+    background-color: var(--accent-color);
+    color: var(--secondary-color);
+    border: 1px solid var(--secondary-color);
 }
-
-.admin-buttons button:hover {
-    background-color: #b71c1c;
-}
-
-.admin-content {
-    background-color: #f5f5f5;
-    padding: 15px;
-    border-radius: var(--border-radius);
-    min-height: 150px;
-}
-
-.logout-btn {
-    margin-top: 15px;
-    background-color: var(--secondary-color);
-    color: var(--text-color);
-    border: none;
-    padding: 10px 15px;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-}
-
-.logout-btn:hover {
-    background-color: #424242;
+#reset-button:hover {
+    background-color: #e0e0e0;
 }
 
 /* ---------------------------
@@ -307,10 +267,11 @@ body {
     }
 
     .chat-window {
-        height: 300px;
+        height: 400px;
     }
 
-    .admin-buttons {
-        flex-direction: column;
+    .option-btn {
+        flex: 1 1 100%;
+        text-align: center;
     }
 }

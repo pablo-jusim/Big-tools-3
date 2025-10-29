@@ -1,36 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Big Tools - Chatbot</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="icon" href="assets/img/logo_bigtools.png" type="image/png">
-</head>
-<body>
-    <!-- Contenedor principal -->
-    <div class="container">
 
-        <!-- Header con logo -->
+    <!-- Favicon y estilos -->
+    <link rel="icon" href="assets/img/logo_bigtools.png" type="image/png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Encabezado -->
         <header class="header">
-            <img src="assets/img/logo_bigtools.png" alt="Big Tools" class="logo">
-            <h1>Asistente Big Tools</h1>
-            <button id="admin-button" class="admin-btn">Modo Administración</button>
+            <div class="header-left">
+                <img src="assets/img/logo_bigtools.png" alt="Big Tools" class="logo">
+                <h1>Asistente Big Tools</h1>
+            </div>
+
+            <div class="header-right">
+                <button id="reset-button" class="admin-btn">Reiniciar Chat</button>
+                <button id="admin-button" class="admin-btn">Modo Administración</button>
+            </div>
         </header>
 
-        <!-- Chatbot -->
+        <!-- Chat principal -->
         <main class="chat-container">
             <div id="chat-window" class="chat-window">
-                <!-- Mensajes se agregarán dinámicamente aquí -->
+                <!-- Mensajes y botones aparecerán dinámicamente -->
             </div>
-            <form id="chat-form" class="chat-form">
-                <input type="text" id="user-input" placeholder="Escriba su mensaje..." autocomplete="off">
-                <button type="submit" id="send-button">Enviar</button>
-            </form>
         </main>
-
     </div>
 
     <script src="js/main.js"></script>
 </body>
+
 </html>

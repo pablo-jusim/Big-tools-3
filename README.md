@@ -6,4 +6,4 @@ cd Frontend
 python -m http.server 3000
 
 en el navegador:
-http://localhost:3000/html/index.html
+http://localhost:3000/index.html
