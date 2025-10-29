@@ -1,34 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Big Tools - Chatbot</title>
 
-  <!-- Favicon y estilos -->
-  <link rel="icon" href="assets/img/logo_bigtools.png" type="image/png">
-  <link rel="stylesheet" href="css/style.css">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big Tools - Chatbot</title>
+
+    <!-- Favicon y estilos -->
+    <link rel="icon" href="assets/img/logo_bigtools.png" type="image/png">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
-  <div class="container">
-    <!-- Encabezado -->
-    <header class="header">
-      <div class="header-left">
-        <img src="assets/img/logo_bigtools.png" alt="Big Tools" class="logo">
-        <h1>Asistente Big Tools</h1>
-      </div>
-      <button id="admin-button" class="admin-btn">Modo Administración</button>
-    </header>
+    <div class="container">
+        <!-- Encabezado -->
+        <header class="header">
+            <div class="header-left">
+                <img src="assets/img/logo_bigtools.png" alt="Big Tools" class="logo">
+                <h1>Asistente Big Tools</h1>
+            </div>
 
-    <!-- Chat principal -->
-    <main class="chat-container">
-      <div id="chat-window" class="chat-window">
-        <!-- Mensajes y botones aparecerán dinámicamente -->
-      </div>
-    </main>
-  </div>
+            <div class="header-right">
+                <button id="reset-button" class="admin-btn">Reiniciar Chat</button>
+                <button id="admin-button" class="admin-btn">Modo Administración</button>
+            </div>
+        </header>
 
-  <script src="js/main.js"></script>
+        <!-- Chat principal -->
+        <main class="chat-container">
+            <div id="chat-window" class="chat-window">
+                <!-- Mensajes y botones aparecerán dinámicamente -->
+            </div>
+        </main>
+    </div>
+
+    <script src="js/main.js"></script>
 </body>
+
 </html>

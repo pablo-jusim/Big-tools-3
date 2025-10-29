@@ -4,6 +4,7 @@
 
 // Elementos del DOM
 const chatWindow = document.getElementById("chat-window");
+const resetBtn = document.getElementById("reset-button");
 // URL base de tu API
 const API_URL = "http://127.0.0.1:8000/api";
 
@@ -191,4 +192,7 @@ async function handleOptionSelection(respuesta) {
 // -----------------------------------------
 // INICIO AUTOMÁTICO DEL CHAT
 // -----------------------------------------
-document.addEventListener("DOMContentLoaded", startChat);
+document.addEventListener("DOMContentLoaded", () => {
+  startChat(); // Esta línea ya existe
+  resetBtn.addEventListener("click", startChat);
+});
