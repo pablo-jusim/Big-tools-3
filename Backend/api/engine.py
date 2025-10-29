@@ -7,6 +7,7 @@ from typing import Optional, List
 from Backend.api.base_conocimiento import BaseConocimiento
 from Backend.api.nodo import Nodo
 from Backend.api.response import Response, ChoiceResponse
+from Backend.api.preprocesamiento import limpiar_texto, similitud_rapida
 
 
 class MotorInferencia:
@@ -43,64 +44,74 @@ class MotorInferencia:
         self.ruta = [nodo_raiz]
         return nodo_raiz
 
-    def avanzar(self, respuesta: Optional[str] = None) -> dict:
-        """
-        Avanza en el árbol según la respuesta recibida.
-        :param respuesta: respuesta del usuario ('sí'/'no' o texto de selección)
-        :return: diccionario con la siguiente pregunta, opciones o resultado final
-        """
-        if not self.nodo_actual:
-            return {"error": "No se ha iniciado el diagnóstico. Use 'iniciar_diagnostico'."}
+def avanzar(self, respuesta: Optional[str] = None) -> dict:
+    """
+    Avanza en el árbol según la respuesta recibida.
+    :param respuesta: respuesta del usuario ('sí'/'no' o texto de selección)
+    :return: diccionario con la siguiente pregunta, opciones o resultado final
+    """
+    from Backend.api.preprocesamiento import limpiar_texto, similitud_rapida
 
-        nodo = self.nodo_actual
+    if not self.nodo_actual:
+        return {"error": "No se ha iniciado el diagnóstico. Use 'iniciar_diagnostico'."}
 
-        # Caso hoja: fin del recorrido
-        if nodo.es_hoja():
-            self.resultado = nodo
-            return self._resultado_final(nodo)
+    nodo = self.nodo_actual
 
-        # Nodo con pregunta
-        if nodo.pregunta and nodo.ramas:
-            # Si es binario
-            if len(nodo.ramas) == 2 and all(r.nombre.lower() in ("sí", "si", "no") for r in nodo.ramas):
-                if respuesta is None:
-                    return {"pregunta": nodo.pregunta, "tipo": "binaria", "opciones": ["sí", "no"]}
-
-                resp_enum = Response.YES if respuesta.lower() in ("sí", "si", "s") else Response.NO
-                siguiente = next(
-                    r for r in nodo.ramas
-                    if (r.nombre.lower() in ("sí", "si") and resp_enum == Response.YES)
-                    or (r.nombre.lower() == "no" and resp_enum == Response.NO)
-                )
-
-            # Selección múltiple
-            else:
-                if respuesta is None:
-                    return {
-                        "pregunta": nodo.pregunta,
-                        "tipo": "multiple",
-                        "opciones": [r.nombre for r in nodo.ramas]
-                    }
-
-                opcion = ChoiceResponse(respuesta)
-                siguiente = next((r for r in nodo.ramas if opcion.is_equal(r.nombre)), None)
-                if not siguiente:
-                    return {"error": f"Opción inválida. Las opciones válidas son {[r.nombre for r in nodo.ramas]}"}
-
-            # Avanzar
-            self.nodo_actual = siguiente
-            self.ruta.append(siguiente)
-            return self.avanzar()  # Llamada recursiva para procesar siguiente paso
-
-        # Nodo sin pregunta pero con ramas (flujo automático)
-        elif nodo.ramas:
-            self.nodo_actual = nodo.ramas[0]
-            self.ruta.append(nodo.ramas[0])
-            return self.avanzar()
-
-        # Nodo sin ramas ni pregunta
+    # Caso hoja: fin del recorrido
+    if nodo.es_hoja():
         self.resultado = nodo
         return self._resultado_final(nodo)
+
+    # Nodo con pregunta
+    if nodo.pregunta and nodo.ramas:
+        # Si es binario
+        if len(nodo.ramas) == 2 and all(limpiar_texto(r.nombre) in ("si", "no") for r in nodo.ramas):
+            if respuesta is None:
+                return {"pregunta": nodo.pregunta, "tipo": "binaria", "opciones": ["sí", "no"]}
+
+            resp_enum = Response.YES if limpiar_texto(respuesta) in ("si", "s") else Response.NO
+            siguiente = next(
+                r for r in nodo.ramas
+                if (limpiar_texto(r.nombre) in ("si") and resp_enum == Response.YES)
+                or (limpiar_texto(r.nombre) == "no" and resp_enum == Response.NO)
+            )
+
+        # Selección múltiple o entrada libre
+        else:
+            if respuesta is None:
+                return {
+                    "pregunta": nodo.pregunta,
+                    "tipo": "multiple",
+                    "opciones": [r.nombre for r in nodo.ramas]
+                }
+
+            # Intentar emparejar usando similitud difusa
+            opciones_texto = [r.nombre for r in nodo.ramas]
+            mejor_coincidencia = similitud_rapida(respuesta, opciones_texto)
+
+            if mejor_coincidencia:
+                siguiente = next(r for r in nodo.ramas if r.nombre == mejor_coincidencia)
+            else:
+                return {
+                    "mensaje": "No se pudo determinar la falla. Intenta con otra descripción.",
+                    "opciones": opciones_texto
+                }
+
+        # Avanzar
+        self.nodo_actual = siguiente
+        self.ruta.append(siguiente)
+        return self.avanzar()  # Llamada recursiva para procesar siguiente paso
+
+    # Nodo sin pregunta pero con ramas (flujo automático)
+    elif nodo.ramas:
+        self.nodo_actual = nodo.ramas[0]
+        self.ruta.append(nodo.ramas[0])
+        return self.avanzar()
+
+    # Nodo sin ramas ni pregunta
+    self.resultado = nodo
+    return self._resultado_final(nodo)
+
 
     def _resultado_final(self, nodo: Nodo) -> dict:
         """
@@ -126,4 +137,3 @@ class MotorInferencia:
         self.nodo_actual = None
         self.maquina_actual = None
         self.ruta = []
-

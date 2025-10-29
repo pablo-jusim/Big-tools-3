@@ -3,7 +3,8 @@ routes.py
 Define las rutas de la API del sistema experto.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Body
+from Backend.api.auth import validar_usuario
 from Backend.api.base_conocimiento import BaseConocimiento
 from Backend.api.engine import MotorInferencia
 
@@ -30,6 +31,13 @@ def home():
     Ruta base de la API.
     """
     return {"mensaje": "API del Sistema Experto activa"}
+
+
+@router.post("/login")
+def login(username: str = Body(...), password: str = Body(...)):
+    if validar_usuario(username, password):
+        return {"success": True, "message": "Login correcto"}
+    raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
 
 
 @router.get("/maquinas")
@@ -75,27 +83,9 @@ def avanzar_diagnostico(nombre_maquina: str, respuesta: str = Query(..., descrip
     Avanza un paso en el árbol de diagnóstico según la respuesta del usuario.
     Devuelve la siguiente pregunta u opciones, o la falla y soluciones si se llegó a un nodo hoja.
     """
-    try:
-        motor = sesiones.get(nombre_maquina)
-        if motor is None:
-            raise HTTPException(status_code=404, detail="No se encontró una sesión activa para esta máquina.")
+    motor = sesiones.get(nombre_maquina)
+    if motor is None:
+        raise HTTPException(status_code=404, detail="No se encontró una sesión activa para esta máquina.")
 
-        nodo_siguiente = motor.avanzar(respuesta)
-        if nodo_siguiente is None:
-            return {"mensaje": "No se pudo avanzar en el diagnóstico."}
-
-        if nodo_siguiente.es_hoja():
-            # Nodo hoja: devolvemos falla y soluciones
-            return {
-                "falla": nodo_siguiente.falla,
-                "soluciones": nodo_siguiente.soluciones
-            }
-
-        # Nodo intermedio: devolvemos pregunta y opciones
-        return {
-            "pregunta": nodo_siguiente.pregunta,
-            "opciones": [r.nombre for r in nodo_siguiente.ramas] if nodo_siguiente.ramas else []
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    resultado = motor.avanzar(respuesta)
+    return resultado
