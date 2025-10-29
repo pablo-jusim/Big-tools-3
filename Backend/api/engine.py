@@ -3,98 +3,127 @@ engine.py
 Motor de inferencia del sistema experto de diagnóstico de máquinas.
 """
 
-from typing import Optional
+from typing import Optional, List
 from api.base_conocimiento import BaseConocimiento
 from api.nodo import Nodo
+from api.response import Response, ChoiceResponse
 
 
 class MotorInferencia:
     """
     Motor que recorre el árbol de conocimiento de una máquina,
-    haciendo preguntas al usuario y guiándolo hasta detectar la falla
-    y ofrecer posibles soluciones.
+    procesando respuestas binarias o de selección múltiple,
+    hasta detectar la falla y ofrecer posibles soluciones.
     """
 
     def __init__(self, base: BaseConocimiento):
         self.base = base
         self.resultado: Optional[Nodo] = None
         self.maquina_actual: Optional[str] = None
+        self.nodo_actual: Optional[Nodo] = None
+        self.ruta: List[Nodo] = []
 
     # -------------------------------------------------------------------------
     # MÉTODOS PRINCIPALES
     # -------------------------------------------------------------------------
 
-    def diagnosticar(self, nombre_maquina: str):
+    def iniciar_diagnostico(self, nombre_maquina: str) -> Nodo:
         """
-        Inicia el proceso de diagnóstico para una máquina específica.
+        Inicializa el diagnóstico para una máquina.
         :param nombre_maquina: Nombre de la máquina a diagnosticar
+        :return: Nodo inicial para comenzar el recorrido
         """
         self.maquina_actual = nombre_maquina
-        nodo_actual = self.base.get_arbol(nombre_maquina)
+        nodo_raiz = self.base.get_arbol(nombre_maquina)
 
-        if not nodo_actual:
+        if not nodo_raiz:
             raise ValueError(f"No se encontró la máquina '{nombre_maquina}' en la base de conocimiento.")
 
-        print(f"\n🔧 Iniciando diagnóstico para: {nombre_maquina}")
-        self.resultado = self._recorrer_arbol(nodo_actual)
+        self.nodo_actual = nodo_raiz
+        self.ruta = [nodo_raiz]
+        return nodo_raiz
 
-        if self.resultado and self.resultado.falla:
-            print(f"\n❗ Falla detectada: {self.resultado.falla}")
-            if self.resultado.soluciones:
-                print("Posibles soluciones:")
-                for i, s in enumerate(self.resultado.soluciones, 1):
-                    print(f"  {i}. {s}")
-        else:
-            print("\n⚠️ No se pudo determinar una falla con la información proporcionada.")
-
-    # -------------------------------------------------------------------------
-    # MÉTODOS AUXILIARES
-    # -------------------------------------------------------------------------
-
-    def _recorrer_arbol(self, nodo: Nodo) -> Optional[Nodo]:
+    def avanzar(self, respuesta: Optional[str] = None) -> dict:
         """
-        Recorre el árbol de conocimiento de forma interactiva.
-        Si el nodo es hoja, devuelve el nodo final.
-        Si tiene ramas, pregunta según el tipo de respuesta esperada.
+        Avanza en el árbol según la respuesta recibida.
+        :param respuesta: respuesta del usuario ('sí'/'no' o texto de selección)
+        :return: diccionario con la siguiente pregunta, opciones o resultado final
         """
-        # Caso base: si el nodo es hoja, se encontró una falla o punto final
+        if not self.nodo_actual:
+            return {"error": "No se ha iniciado el diagnóstico. Use 'iniciar_diagnostico'."}
+
+        nodo = self.nodo_actual
+
+        # Caso hoja: fin del recorrido
         if nodo.es_hoja():
-            return nodo
+            self.resultado = nodo
+            return self._resultado_final(nodo)
 
-        # Mostrar la pregunta asociada al nodo
-        if nodo.pregunta:
-            print(f"\n{nodo.pregunta}")
+        # Nodo con pregunta
+        if nodo.pregunta and nodo.ramas:
+            # Si es binario
+            if len(nodo.ramas) == 2 and all(r.nombre.lower() in ("sí", "si", "no") for r in nodo.ramas):
+                if respuesta is None:
+                    return {"pregunta": nodo.pregunta, "tipo": "binaria", "opciones": ["sí", "no"]}
 
-            # Si las ramas son binarias (sí/no)
-            if len(nodo.ramas) == 2 and all(r.nombre.lower() in ("sí", "no", "si", "no") for r in nodo.ramas):
-                respuesta = input("(s/n): ").strip().lower()
-                while respuesta not in ("s", "n", "sí", "si", "no"):
-                    respuesta = input("Respuesta inválida. Ingrese 's' o 'n': ").strip().lower()
+                resp_enum = Response.YES if respuesta.lower() in ("sí", "si", "s") else Response.NO
+                siguiente = next(
+                    r for r in nodo.ramas
+                    if (r.nombre.lower() in ("sí", "si") and resp_enum == Response.YES)
+                    or (r.nombre.lower() == "no" and resp_enum == Response.NO)
+                )
 
-                if respuesta in ("s", "sí", "si"):
-                    siguiente = next(r for r in nodo.ramas if r.nombre.lower() in ("sí", "si"))
-                else:
-                    siguiente = next(r for r in nodo.ramas if r.nombre.lower() == "no")
-
-                return self._recorrer_arbol(siguiente)
-
-            # Si tiene múltiples opciones (más de dos ramas)
+            # Selección múltiple
             else:
-                print("Opciones:")
-                for i, rama in enumerate(nodo.ramas, 1):
-                    print(f"  {i}. {rama.nombre}")
+                if respuesta is None:
+                    return {
+                        "pregunta": nodo.pregunta,
+                        "tipo": "multiple",
+                        "opciones": [r.nombre for r in nodo.ramas]
+                    }
 
-                opcion = input("Seleccione una opción (número): ").strip()
-                while not opcion.isdigit() or int(opcion) not in range(1, len(nodo.ramas) + 1):
-                    opcion = input("Opción inválida. Ingrese un número válido: ").strip()
+                opcion = ChoiceResponse(respuesta)
+                siguiente = next((r for r in nodo.ramas if opcion.is_equal(r.nombre)), None)
+                if not siguiente:
+                    return {"error": f"Opción inválida. Las opciones válidas son {[r.nombre for r in nodo.ramas]}"}
 
-                siguiente = nodo.ramas[int(opcion) - 1]
-                return self._recorrer_arbol(siguiente)
+            # Avanzar
+            self.nodo_actual = siguiente
+            self.ruta.append(siguiente)
+            return self.avanzar()  # Llamada recursiva para procesar siguiente paso
 
-        # Si el nodo no tiene pregunta, pero tiene ramas (caso irregular)
+        # Nodo sin pregunta pero con ramas (flujo automático)
         elif nodo.ramas:
-            print(f"\nEl nodo '{nodo.nombre}' no tiene pregunta, pero posee ramas. Continuando automáticamente...")
-            return self._recorrer_arbol(nodo.ramas[0])
+            self.nodo_actual = nodo.ramas[0]
+            self.ruta.append(nodo.ramas[0])
+            return self.avanzar()
 
-        # Si no hay más ramas ni falla, fin del recorrido
-        return nodo
+        # Nodo sin ramas ni pregunta
+        self.resultado = nodo
+        return self._resultado_final(nodo)
+
+    def _resultado_final(self, nodo: Nodo) -> dict:
+        """
+        Devuelve el resultado final del diagnóstico.
+        """
+        if nodo.falla:
+            return {
+                "maquina": self.maquina_actual,
+                "falla": nodo.falla,
+                "soluciones": nodo.soluciones
+            }
+        else:
+            return {
+                "maquina": self.maquina_actual,
+                "mensaje": "No se pudo determinar una falla con la información proporcionada."
+            }
+
+    def reiniciar(self):
+        """
+        Reinicia el motor para un nuevo diagnóstico.
+        """
+        self.resultado = None
+        self.nodo_actual = None
+        self.maquina_actual = None
+        self.ruta = []
+

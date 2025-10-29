@@ -1,0 +1,50 @@
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.sqlite3
+*.db
+*.env
+.env.*
+
+# Logs
+*.log
+
+# VS Code
+.vscode/
+
+# Mac
+.DS_Store
+
+# -------------------------
+# Backend / FastAPI
+# -------------------------
+data/*.json          # Ignorar bases de conocimiento si no quieres versionarlas
+*.egg-info/
+dist/
+build/
+*.pytest_cache/
+.venv/
+env/
+venv/
+
+# -------------------------
+# Node / Frontend (si llegas a usar npm)
+# -------------------------
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# -------------------------
+# Archivos temporales y de sistema
+# -------------------------
+*.swp
+*.swo
+*.bak
+*.tmp
+*.backup
+*.~*
