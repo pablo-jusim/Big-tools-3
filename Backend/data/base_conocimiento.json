@@ -2,7 +2,7 @@
   "hidrolavadora_karcher": {
     "categorias": [
       {
-        "categoria": "El aparato no funciona / no se pone en marcha",
+        "categoria": "El aparato no funciona o no se pone en marcha",
         "ramas": [
           {
             "falla": "No hay tensión de red",
