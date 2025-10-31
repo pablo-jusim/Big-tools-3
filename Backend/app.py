@@ -46,3 +46,36 @@ app.include_router(router)
 @app.get("/")
 def root():
     return {"mensaje": "API del Sistema Experto activa"}
+
+
+
+import json
+from pathlib import Path
+
+app = FastAPI()
+DATA_PATH = Path("data/base_conocimiento.json")
+
+@app.post("/add_conocimiento")
+async def add_conocimiento(request: Request):
+    data = await request.json()
+    manual = data.get("manual")
+    causa = data.get("causa")
+    falla = data.get("falla")
+    solucion = data.get("solucion")
+    try:
+        bd = json.loads(DATA_PATH.read_text())
+        # Buscar manual existente o crear uno nuevo
+        for m in bd["manuales"]:
+            if m["nombre"].lower() == manual.lower():
+                m["items"].append({"causa": causa, "falla": falla, "solucion": solucion})
+                break
+        else:
+            bd["manuales"].append({
+                "nombre": manual,
+                "items": [{"causa": causa, "falla": falla, "solucion": solucion}]
+            })
+        DATA_PATH.write_text(json.dumps(bd, indent=2, ensure_ascii=False))
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
