@@ -184,3 +184,20 @@ class MotorInferencia:
         self.maquina_actual = None
         self.categorias = []
         self.ruta = []
+
+
+# Ejemplo conceptual dentro de engine.py
+# (Se asume que tienes acceso a la Entry_Final)
+
+def finalizar_diagnostico(entry_final):
+    # 1. Obtener el mensaje final
+    mensaje = entry_final.get_prop('MENSAJE_FINAL') 
+    
+    # 2. Obtener la referencia del PDF (la propiedad que añadimos)
+    referencia = entry_final.get_prop('REFERENCIA_FINAL')
+    
+    # 3. Retornar la respuesta usando la función actualizada
+    return response.create_final_response(
+        mensaje_final=mensaje,
+        referencia_pdf=referencia  # Pasa el link completo aquí
+    )
