@@ -514,3 +514,28 @@
     ]
   }
 }
+
+{
+  "manuales": [
+    {
+      "nombre": "Manual Empresa",
+      "items": [
+        {
+          "causa": "_____",
+          "falla": "_____",
+          "solucion": "_____"
+        }
+      ]
+    },
+    {
+      "nombre": "Manual Politécnico",
+      "items": [
+        {
+          "causa": "_____",
+          "falla": "_____",
+          "solucion": "_____"
+        }
+      ]
+    }
+  ]
+}
