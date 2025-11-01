@@ -10,7 +10,22 @@
     <link rel="icon" href="assets/img/logo_bigtools.png" type="image/png">
     <link rel="stylesheet" href="css/style.css">
 </head>
-
+    
+<script>
+document.getElementById('agregar-manual').onsubmit = async function(e) {
+  e.preventDefault();
+  const datos = Object.fromEntries(new FormData(this));
+  const resp = await fetch('http://localhost:8000/add_conocimiento', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(datos)
+  });
+  const resultado = await resp.json();
+  document.getElementById('estado-agregado').innerText =
+    resultado.success ? "¡Agregado exitosamente!" : "Error: " + resultado.error;
+};
+</script>
+    
 <body>
     <div class="container">
         <!-- Encabezado -->
@@ -35,6 +50,7 @@
     </div>
 
     <script src="js/main.js"></script>
+
     <h3>Agregar nuevo manual / conocimiento</h3>
 <form id="agregar-manual">
   <label>Nombre del manual:</label>
@@ -52,6 +68,8 @@
   <button type="submit">Agregar</button>
 </form>
 <div id="estado-agregado"></div>
+
+
 </body>
 
 </html>
