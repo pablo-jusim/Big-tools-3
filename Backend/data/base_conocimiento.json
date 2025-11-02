@@ -1,144 +1,134 @@
 {
-  "__v": 1,
-  "description": "Base de conocimiento de máquinas v2 (Simplificada)",
   "hidrolavadora_karcher": {
     "pregunta": "¿Cuál es el síntoma principal que observa?",
     "ramas": [
       {
         "atributo": "El aparato no funciona o no se pone en marcha",
-        "ramas": [
-          {
-            "falla": "No hay tensión de red",
-            "referencia": "ES-8",
-            "soluciones": [
-              "Verificar conexión de red/cable."
-            ]
-          }
-        ]
+        "falla": "No hay tensión de red",
+        "soluciones": [
+          "Verificar conexión de red/cable."
+        ],
+        "referencia": "ES-8"
       },
       {
         "atributo": "Una luz parpadea",
+        "pregunta": "¿Qué luz parpadea?",
         "ramas": [
           {
-            "pregunta": "¿Qué luz parpadea?",
+            "atributo": "El piloto de control de la bomba",
+            "pregunta": "¿Cuántas veces parpadea?",
             "ramas": [
               {
-                "atributo": "El piloto de control de la bomba",
-                "pregunta": "¿Cuántas veces parpadea?",
-                "ramas": [
-                  {
-                    "atributo": "Parpadea 2 veces",
-                    "falla": "Fuga en el sistema de alta presión",
-                    "referencia": "ES-7",
-                    "soluciones": [
-                      "Verificar la estanqueidad del sistema de alta presión y las conexiones."
-                    ]
-                  },
-                  {
-                    "atributo": "Parpadea 3 veces",
-                    "falla": "Falta de agua",
-                    "referencia": "ES-7",
-                    "soluciones": [
-                      "Comprobar la conexión de agua y las tuberías."
-                    ]
-                  },
-                  {
-                    "atributo": "Parpadea 4 veces",
-                    "falla": "Interruptor de láminas flexibles pegado en dispositivo de seguridad contra funcionamiento en seco",
-                    "referencia": "ES-7",
-                    "soluciones": [
-                      "Comprobar el dispositivo de seguridad contra el funcionamiento en seco."
-                    ]
-                  }
-                ]
-              },
-              {
-                "atributo": "El piloto de control dirección de giro",
-                "falla": "Polos del enchufe invertidos",
+                "atributo": "Parpadea 2 veces",
+                "falla": "Fuga en el sistema de alta presión",
                 "referencia": "ES-7",
                 "soluciones": [
-                  "Cambiar los polos del enchufe."
+                  "Verificar la estanqueidad del sistema de alta presión y las conexiones."
                 ]
               },
               {
-                "atributo": "El piloto de control del motor",
-                "pregunta": "¿Cuántas veces parpadea?",
-                "ramas": [
-                  {
-                    "atributo": "Parpadea 1 vez",
-                    "falla": "Fallo del relé",
-                    "referencia": "ES-7",
-                    "soluciones": [
-                      "Verificar/reemplazar el relé del motor."
-                    ]
-                  },
-                  {
-                    "atributo": "Parpadea 2 veces",
-                    "falla": "Motor sobrecargado/sobrecalentado",
-                    "referencia": "ES-7",
-                    "soluciones": [
-                      "Ponga el interruptor del aparato en '0/OFF'.",
-                      "Deje enfriar el aparato.",
-                      "Verificar la causa de la sobrecarga (ej. boquilla obstruida, voltaje)."
-                    ]
-                  },
-                  {
-                    "atributo": "Parpadea 3 veces",
-                    "falla": "Fallo en la alimentación de tensión",
-                    "referencia": "ES-7",
-                    "soluciones": [
-                      "Verificar la fuente de alimentación del motor."
-                    ]
-                  },
-                  {
-                    "atributo": "Parpadea 4 veces",
-                    "falla": "Consumo de corriente demasiado alto",
-                    "referencia": "ES-7",
-                    "soluciones": [
-                      "Medir el consumo de corriente del motor y verificar si hay sobrecarga."
-                    ]
-                  }
+                "atributo": "Parpadea 3 veces",
+                "falla": "Falta de agua",
+                "referencia": "ES-7",
+                "soluciones": [
+                  "Comprobar la conexión de agua y las tuberías."
                 ]
               },
               {
-                "atributo": "El piloto de control de avería en el quemador",
-                "pregunta": "¿Cuántas veces parpadea?",
-                "ramas": [
-                  {
-                    "atributo": "Parpadea 1 vez",
-                    "falla": "El limitador de temperatura de gases de escape se ha activado",
-                    "referencia": "ES-8",
-                    "soluciones": [
-                      "Ponga el interruptor del aparato en '0/OFF'.",
-                      "Deje enfriar el aparato.",
-                      "Verificar la chimenea y el intercambiador de calor por hollín."
-                    ]
-                  },
-                  {
-                    "atributo": "Parpadea 2 veces",
-                    "falla": "Detector de llamas ha apagado",
-                    "referencia": "ES-8",
-                    "soluciones": [
-                      "Revisar y limpiar el detector de llamas.",
-                      "Verificar la ignición y el suministro de combustible."
-                    ]
-                  },
-                  {
-                    "atributo": "Parpadea 3 veces",
-                    "falla": "Detector de producto de cuidado defectuoso",
-                    "referencia": "ES-8",
-                    "soluciones": [
-                      "Verificar/reemplazar el detector de producto de cuidado."
-                    ]
-                  },
-                  {
-                    "atributo": "Parpadea 4 veces",
-                    "falla": "Sensor de temperatura defectuoso",
-                    "referencia": "ES-8",
-                    "soluciones": [
-                      "Verificar/reemplazar el sensor de temperatura."
-                    ]
-                  }
+                "atributo": "Parpadea 4 veces",
+                "falla": "Interruptor de láminas flexibles pegado en dispositivo de seguridad contra funcionamiento en seco",
+                "referencia": "ES-7",
+                "soluciones": [
+                  "Comprobar el dispositivo de seguridad contra el funcionamiento en seco."
+                ]
+              }
+            ]
+          },
+          {
+            "atributo": "El piloto de control dirección de giro",
+            "falla": "Polos del enchufe invertidos",
+            "referencia": "ES-7",
+            "soluciones": [
+              "Cambiar los polos del enchufe."
+            ]
+          },
+          {
+            "atributo": "El piloto de control del motor",
+            "pregunta": "¿Cuántas veces parpadea?",
+            "ramas": [
+              {
+                "atributo": "Parpadea 1 vez",
+                "falla": "Fallo del relé",
+                "referencia": "ES-7",
+                "soluciones": [
+                  "Verificar/reemplazar el relé del motor."
+                ]
+              },
+              {
+                "atributo": "Parpadea 2 veces",
+                "falla": "Motor sobrecargado/sobrecalentado",
+                "referencia": "ES-7",
+                "soluciones": [
+                  "Ponga el interruptor del aparato en '0/OFF'.",
+                  "Deje enfriar el aparato.",
+                  "Verificar la causa de la sobrecarga (ej. boquilla obstruida, voltaje)."
+                ]
+              },
+              {
+                "atributo": "Parpadea 3 veces",
+                "falla": "Fallo en la alimentación de tensión",
+                "referencia": "ES-7",
+                "soluciones": [
+                  "Verificar la fuente de alimentación del motor."
+                ]
+              },
+              {
+                "atributo": "Parpadea 4 veces",
+                "falla": "Consumo de corriente demasiado alto",
+                "referencia": "ES-7",
+                "soluciones": [
+                  "Medir el consumo de corriente del motor y verificar si hay sobrecarga."
+                ]
+              }
+            ]
+          },
+          {
+            "atributo": "El piloto de control de avería en el quemador",
+            "pregunta": "¿Cuántas veces parpadea?",
+            "ramas": [
+              {
+                "atributo": "Parpadea 1 vez",
+                "falla": "El limitador de temperatura de gases de escape se ha activado",
+                "referencia": "ES-8",
+                "soluciones": [
+                  "Ponga el interruptor del aparato en '0/OFF'.",
+                  "Deje enfriar el aparato.",
+                  "Verificar la chimenea y el intercambiador de calor por hollín."
+                ]
+              },
+              {
+                "atributo": "Parpadea 2 veces",
+                "falla": "Detector de llamas ha apagado",
+                "referencia": "ES-8",
+                "soluciones": [
+                  "Revisar y limpiar el detector de llamas.",
+                  "Verificar la ignición y el suministro de combustible."
+                ]
+              },
+              {
+                "atributo": "Parpadea 3 veces",
+                "falla": "Detector de producto de cuidado defectuoso",
+                "referencia": "ES-8",
+                "soluciones": [
+                  "Verificar/reemplazar el detector de producto de cuidado."
+                ]
+              },
+              {
+                "atributo": "Parpadea 4 veces",
+                "falla": "Sensor de temperatura defectuoso",
+                "referencia": "ES-8",
+                "soluciones": [
+                  "Verificar/reemplazar el sensor de temperatura."
                 ]
               }
             ]
@@ -147,106 +137,94 @@
       },
       {
         "atributo": "Una luz está encendida (fija)",
+        "pregunta": "¿Qué luz está encendida?",
         "ramas": [
           {
-            "pregunta": "¿Qué luz está encendida?",
-            "ramas": [
-              {
-                "atributo": "El piloto de control de combustible",
-                "falla": "Depósito de combustible vacío",
-                "referencia": "ES-8",
-                "soluciones": [
-                  "Llenar de combustible."
-                ]
-              },
-              {
-                "atributo": "El piloto de control del producto de cuidado del sistema",
-                "falla": "El recipiente de producto de mantenimiento está vacío",
-                "referencia": "ES-8",
-                "soluciones": [
-                  "Rellenar producto de mantenimiento."
-                ]
-              }
+            "atributo": "El piloto de control de combustible",
+            "falla": "Depósito de combustible vacío",
+            "referencia": "ES-8",
+            "soluciones": [
+              "Llenar de combustible."
+            ]
+          },
+          {
+            "atributo": "El piloto de control del producto de cuidado del sistema",
+            "falla": "El recipiente de producto de mantenimiento está vacío",
+            "referencia": "ES-8",
+            "soluciones": [
+              "Rellenar producto de mantenimiento."
             ]
           }
         ]
       },
       {
         "atributo": "El aparato no genera presión",
+        "pregunta": "¿Cuál es la causa probable?",
         "ramas": [
           {
-            "pregunta": "¿Cuál es la causa probable?",
-            "ramas": [
-              {
-                "atributo": "Sospecha de aire en el sistema",
-                "falla": "Aire en el sistema",
-                "referencia": "ES-8",
-                "soluciones": [
-                  "Purgar el aire de la bomba: Poner la válvula dosificadora en '0'.",
-                  "Cuando la pistola pulverizadora está abierta conecte y desconecte el aparato varias veces con el interruptor principal.",
-                  "Verifique las conexiones y tuberías."
-                ]
-              },
-              {
-                "atributo": "La cantidad de abastecimiento de agua es escasa",
-                "falla": "Cantidad de abastecimiento de agua escasa",
-                "referencia": "ES-8",
-                "soluciones": [
-                  "Verifique la cantidad de abastecimiento de agua (ver datos técnicos)."
-                ]
-              },
-              {
-                "atributo": "Filtros/tamices sucios",
-                "falla": "Tamiz en conexión de agua o filtro de depuración fina sucios",
-                "referencia": "ES-8",
-                "soluciones": [
-                  "Limpie el tamiz en la conexión del agua.",
-                  "Limpiar el filtro de depuración fina, si es necesario cambiar."
-                ]
-              }
+            "atributo": "Sospecha de aire en el sistema",
+            "falla": "Aire en el sistema",
+            "referencia": "ES-8",
+            "soluciones": [
+              "Purgar el aire de la bomba: Poner la válvula dosificadora en '0'.",
+              "Cuando la pistola pulverizadora está abierta conecte y desconecte el aparato varias veces con el interruptor principal.",
+              "Verifique las conexiones y tuberías."
+            ]
+          },
+          {
+            "atributo": "La cantidad de abastecimiento de agua es escasa",
+            "falla": "Cantidad de abastecimiento de agua escasa",
+            "referencia": "ES-8",
+            "soluciones": [
+              "Verifique la cantidad de abastecimiento de agua (ver datos técnicos)."
+            ]
+          },
+          {
+            "atributo": "Filtros/tamices sucios",
+            "falla": "Tamiz en conexión de agua o filtro de depuración fina sucios",
+            "referencia": "ES-8",
+            "soluciones": [
+              "Limpie el tamiz en la conexión del agua.",
+              "Limpiar el filtro de depuración fina, si es necesario cambiar."
             ]
           }
         ]
       },
       {
         "atributo": "El quemador no se enciende (el agua no calienta)",
+        "pregunta": "¿Cuál es la causa probable?",
         "ramas": [
           {
-            "pregunta": "¿Cuál es la causa probable?",
-            "ramas": [
-              {
-                "atributo": "Depósito de combustible vacío",
-                "falla": "Depósito de combustible vacío",
-                "referencia": "ES-8",
-                "soluciones": [
-                  "Llenar de combustible."
-                ]
-              },
-              {
-                "atributo": "Recipiente de producto de mantenimiento vacío",
-                "falla": "El recipiente de producto de mantenimiento del sistema está vacío",
-                "referencia": "ES-8",
-                "soluciones": [
-                  "Rellenar producto de mantenimiento."
-                ]
-              },
-              {
-                "atributo": "Falta de agua",
-                "falla": "Falta de agua (el dispositivo de seguridad lo impide)",
-                "referencia": "ES-8",
-                "soluciones": [
-                  "Comprobar la conexión de agua y las tuberías.",
-                  "Limpie el tamiz en el dispositivo de seguridad contra el funcionamiento en seco."
-                ]
-              },
-              {
-                "atributo": "Filtro de combustible sucio",
-                "falla": "El filtro de combustible está sucio",
-                "referencia": "ES-8",
-                "soluciones": [
-                  "Cambie el filtro de combustible."
-                ]
-              }
+            "atributo": "Depósito de combustible vacío",
+            "falla": "Depósito de combustible vacío",
+            "referencia": "ES-8",
+            "soluciones": [
+              "Llenar de combustible."
+            ]
+          },
+          {
+            "atributo": "Recipiente de producto de mantenimiento vacío",
+            "falla": "El recipiente de producto de mantenimiento del sistema está vacío",
+            "referencia": "ES-8",
+            "soluciones": [
+              "Rellenar producto de mantenimiento."
+            ]
+          },
+          {
+            "atributo": "Falta de agua",
+            "falla": "Falta de agua (el dispositivo de seguridad lo impide)",
+            "referencia": "ES-8",
+            "soluciones": [
+              "Comprobar la conexión de agua y las tuberías.",
+              "Limpie el tamiz en el dispositivo de seguridad contra el funcionamiento en seco."
+            ]
+          },
+          {
+            "atributo": "Filtro de combustible sucio",
+            "falla": "El filtro de combustible está sucio",
+            "referencia": "ES-8",
+            "soluciones": [
+              "Cambie el filtro de combustible."
             ]
           }
         ]
@@ -258,52 +236,48 @@
     "ramas": [
       {
         "atributo": "Problemas de arranque del motor",
+        "pregunta": "¿Cuál es el síntoma exacto?",
         "ramas": [
           {
-            "pregunta": "¿Cuál es el síntoma exacto?",
+            "atributo": "El motor no efectúa giros de arranque",
+            "pregunta": "¿Cuál es la causa probable?",
             "ramas": [
               {
-                "atributo": "El motor no efectúa giros de arranque",
-                "pregunta": "¿Cuál es la causa probable?",
-                "ramas": [
-                  {
-                    "atributo": "Fusible quemado",
-                    "falla": "Fusible de 7.5 A quemado",
-                    "referencia": "27",
-                    "soluciones": [
-                      "Corrija la condición de cortocircuito sustituyendo el fusible de 7.5 A en el tablero de control del generador."
-                    ]
-                  },
-                  {
-                    "atributo": "Batería agotada",
-                    "falla": "Batería agotada",
-                    "referencia": "27",
-                    "soluciones": [
-                      "Cargue o sustituya la batería."
-                    ]
-                  }
+                "atributo": "Fusible quemado",
+                "falla": "Fusible de 7.5 A quemado",
+                "referencia": "27",
+                "soluciones": [
+                  "Corrija la condición de cortocircuito sustituyendo el fusible de 7.5 A en el tablero de control del generador."
                 ]
               },
               {
-                "atributo": "El motor efectúa giros de arranque pero no arranca",
-                "pregunta": "¿Cuál es la causa probable?",
-                "ramas": [
-                  {
-                    "atributo": "Sin combustible",
-                    "falla": "Sin combustible",
-                    "referencia": "27",
-                    "soluciones": [
-                      "Cargue combustible/abra la válvula de combustible."
-                    ]
-                  },
-                  {
-                    "atributo": "Bujía(s) defectuosa(s)",
-                    "falla": "Bujía(s) defectuosa(s)",
-                    "referencia": "27",
-                    "soluciones": [
-                      "Limpie, ajuste la separación o sustituya la(s) bujía(s)."
-                    ]
-                  }
+                "atributo": "Batería agotada",
+                "falla": "Batería agotada",
+                "referencia": "27",
+                "soluciones": [
+                  "Cargue o sustituya la batería."
+                ]
+              }
+            ]
+          },
+          {
+            "atributo": "El motor efectúa giros de arranque pero no arranca",
+            "pregunta": "¿Cuál es la causa probable?",
+            "ramas": [
+              {
+                "atributo": "Sin combustible",
+                "falla": "Sin combustible",
+                "referencia": "27",
+                "soluciones": [
+                  "Cargue combustible/abra la válvula de combustible."
+                ]
+              },
+              {
+                "atributo": "Bujía(s) defectuosa(s)",
+                "falla": "Bujía(s) defectuosa(s)",
+                "referencia": "27",
+                "soluciones": [
+                  "Limpie, ajuste la separación o sustituya la(s) bujía(s)."
                 ]
               }
             ]
@@ -312,177 +286,173 @@
       },
       {
         "atributo": "Problemas con luces LED o alarmas",
+        "pregunta": "¿Cuál es el síntoma?",
         "ramas": [
           {
-            "pregunta": "¿Cuál es el síntoma?",
+            "atributo": "La unidad no arranca en AUTO (con pérdida de servicio)",
+            "pregunta": "¿Qué luz LED ve y qué alarma muestra la pantalla?",
             "ramas": [
               {
-                "atributo": "La unidad no arranca en AUTO (con pérdida de servicio)",
-                "pregunta": "¿Qué luz LED ve y qué alarma muestra la pantalla?",
-                "ramas": [
-                  {
-                    "atributo": "LED NINGUNA y Alarma 'NO ACTIVADA'",
-                    "falla": "Unidad no activada",
-                    "referencia": "27",
-                    "soluciones": [
-                      "Consulte la sección activación del manual del propietario."
-                    ]
-                  },
-                  {
-                    "atributo": "LED ROJO y Alarma 'BAJA PRESIÓN DE ACEITE'",
-                    "falla": "Baja presión de aceite",
-                    "referencia": "27",
-                    "soluciones": [
-                      "Compruebe el nivel de aceite. Añada aceite según el manual del propietario.",
-                      "Si el nivel de aceite es correcto, verificar el sensor de presión de aceite."
-                    ]
-                  },
-                  {
-                    "atributo": "LED ROJO y Alarma 'ARRANQUE FALLIDO'",
-                    "falla": "Arranque fallido (posible problema de combustible)",
-                    "referencia": "27",
-                    "soluciones": [
-                      "Compruebe que la válvula de cierre de la tubería de combustible esté en la posición ON.",
-                      "Borre la alarma. Intente arrancar la unidad en MANUAL.",
-                      "Si no arranca, verificar solenoide de combustible y línea de gas."
-                    ]
-                  },
-                  {
-                    "atributo": "LED ROJO y Alarma 'PROBLEMA DE FUSIBLE'",
-                    "falla": "Problema de fusible",
-                    "referencia": "28",
-                    "soluciones": [
-                      "Compruebe el fusible tipo ATO de 7.5 A.",
-                      "Sustituya con un fusible del mismo tipo si no está en buen estado.",
-                      "Si el fusible está bien, verificar el cableado asociado al fusible."
-                    ]
-                  },
-                  {
-                    "atributo": "LED ROJO y Alarma 'SOBREVELOCIDAD'",
-                    "falla": "Fallo interno grave (Sobrevelocidad)",
-                    "referencia": "28",
-                    "soluciones": [
-                      "Realizar diagnóstico de la tarjeta de control y sensor de velocidad."
-                    ]
-                  },
-                  {
-                    "atributo": "LED ROJO y Alarma 'BAJO VOLTAJE'",
-                    "falla": "Fallo interno grave (Bajo Voltaje)",
-                    "referencia": "28",
-                    "soluciones": [
-                      "Verificar el regulador de voltaje y la tarjeta de control."
-                    ]
-                  },
-                  {
-                    "atributo": "LED ROJO y Alarma 'BAJA VELOCIDAD'",
-                    "falla": "Fallo interno grave (Baja Velocidad)",
-                    "referencia": "28",
-                    "soluciones": [
-                      "Realizar diagnóstico de la tarjeta de control y gobernador."
-                    ]
-                  },
-                  {
-                    "atributo": "LED ROJO y Alarma 'SOBREVOLTAJE'",
-                    "falla": "Fallo interno grave (Sobrevoltaje)",
-                    "referencia": "2Z8",
-                    "soluciones": [
-                      "Verificar el regulador de voltaje y la tarjeta de control."
-                    ]
-                  },
-                  {
-                    "atributo": "LED ROJO y Alarma 'CABLEADO INCORRECTO'",
-                    "falla": "Fallo interno grave (Cableado Incorrecto)",
-                    "referencia": "28",
-                    "soluciones": [
-                      "Revisar todo el cableado de control según el diagrama."
-                    ]
-                  }
+                "atributo": "LED NINGUNA y Alarma 'NO ACTIVADA'",
+                "falla": "Unidad no activada",
+                "referencia": "27",
+                "soluciones": [
+                  "Consulte la sección activación del manual del propietario."
                 ]
               },
               {
-                "atributo": "La unidad se para durante el funcionamiento",
-                "pregunta": "¿Qué luz LED ve y qué alarma muestra la pantalla?",
-                "ramas": [
-                  {
-                    "atributo": "LED ROJO y Alarma 'ALTA TEMPERATURA'",
-                    "falla": "Alta temperatura del motor",
-                    "referencia": "27",
-                    "soluciones": [
-                      "Compruebe la ventilación alrededor de la admisión, el escape y la parte trasera del generador.",
-                      "Si no hay obstrucciones, verificar el sensor de temperatura."
-                    ]
-                  },
-                  {
-                    "atributo": "LED ROJO y Alarma 'SOBRECARGA, RETIRAR LA CARGA'",
-                    "falla": "Sobrecarga",
-                    "referencia": "27",
-                    "soluciones": [
-                      "Borre la alarma y retire las cargas domésticas del generador.",
-                      "Coloque de vuelta en AUTO y vuelva a arrancar.",
-                      "Si la falla persiste sin carga, verificar el disyuntor (breaker)."
-                    ]
-                  }
+                "atributo": "LED ROJO y Alarma 'BAJA PRESIÓN DE ACEITE'",
+                "falla": "Baja presión de aceite",
+                "referencia": "27",
+                "soluciones": [
+                  "Compruebe el nivel de aceite. Añada aceite según el manual del propietario.",
+                  "Si el nivel de aceite es correcto, verificar el sensor de presión de aceite."
                 ]
               },
               {
-                "atributo": "El LED amarillo se enciende",
-                "pregunta": "¿Qué alarma o mensaje muestra la pantalla?",
-                "ramas": [
-                  {
-                    "atributo": "Alarma 'CARGA BAJA DE BATERÍA'",
-                    "falla": "Carga baja de batería",
-                    "referencia": "28",
-                    "soluciones": [
-                      "Borre la alarma.",
-                      "Del menú PRINCIPAL en el tablero de control, desplácese al MENÚ DE BATERÍA.",
-                      "Sustituya la batería si se muestra COMPROBAR BATERÍA."
-                    ]
-                  },
-                  {
-                    "atributo": "Mensaje 'SERVICIO A'",
-                    "falla": "Mantenimiento programado requerido (A)",
-                    "referencia": "28",
-                    "soluciones": [
-                      "Efectúe el programa de mantenimiento A.",
-                      "Pulse ENTER para borrar el mensaje."
-                    ]
-                  },
-                  {
-                    "atributo": "Mensaje 'SERVICIO B'",
-                    "falla": "Mantenimiento programado requerido (B)",
-                    "referencia": "28",
-                    "soluciones": [
-                      "Efectúe el programa de mantenimiento B.",
-                      "Pulse ENTER para borrar el mensaje."
-                    ]
-                  },
-                  {
-                    "atributo": "Mensaje 'Inspección de la batería'",
-                    "falla": "Mantenimiento programado requerido (Batería)",
-                    "referencia": "28",
-                    "soluciones": [
-                      "Inspeccione la batería.",
-                      "Pulse ENTER para borrar el mensaje."
-                    ]
-                  },
-                  {
-                    "atributo": "Alarma 'PROBLEMA DE BATERÍA'",
-                    "falla": "Problema con la batería",
-                    "referencia": "28",
-                    "soluciones": [
-                      "Verificar conexiones de batería, bornes y nivel de electrolito.",
-                      "Reemplazar batería si es necesario."
-                    ]
-                  },
-                  {
-                    "atributo": "Alarma 'ADVERTENCIA DEL CARGADOR'",
-                    "falla": "Problema con el cargador de batería",
-                    "referencia": "28",
-                    "soluciones": [
-                      "Verificar el voltaje de entrada y salida del cargador.",
-                      "Revisar el circuito del cargador."
-                    ]
-                  }
+                "atributo": "LED ROJO y Alarma 'ARRANQUE FALLIDO'",
+                "falla": "Arranque fallido (posible problema de combustible)",
+                "referencia": "27",
+                "soluciones": [
+                  "Compruebe que la válvula de cierre de la tubería de combustible esté en la posición ON.",
+                  "Borre la alarma. Intente arrancar la unidad en MANUAL.",
+                  "Si no arranca, verificar solenoide de combustible y línea de gas."
+                ]
+              },
+              {
+                "atributo": "LED ROJO y Alarma 'PROBLEMA DE FUSIBLE'",
+                "falla": "Problema de fusible",
+                "referencia": "28",
+                "soluciones": [
+                  "Compruebe el fusible tipo ATO de 7.5 A.",
+                  "Sustituya con un fusible del mismo tipo si no está en buen estado.",
+                  "Si el fusible está bien, verificar el cableado asociado al fusible."
+                ]
+              },
+              {
+                "atributo": "LED ROJO y Alarma 'SOBREVELOCIDAD'",
+                "falla": "Fallo interno grave (Sobrevelocidad)",
+                "referencia": "28",
+                "soluciones": [
+                  "Realizar diagnóstico de la tarjeta de control y sensor de velocidad."
+                ]
+              },
+              {
+                "atributo": "LED ROJO y Alarma 'BAJO VOLTAJE'",
+                "falla": "Fallo interno grave (Bajo Voltaje)",
+                "referencia": "28",
+                "soluciones": [
+                  "Verificar el regulador de voltaje y la tarjeta de control."
+                ]
+              },
+              {
+                "atributo": "LED ROJO y Alarma 'BAJA VELOCIDAD'",
+                "falla": "Fallo interno grave (Baja Velocidad)",
+                "referencia": "28",
+                "soluciones": [
+                  "Realizar diagnóstico de la tarjeta de control y gobernador."
+                ]
+              },
+              {
+                "atributo": "LED ROJO y Alarma 'SOBREVOLTAJE'",
+                "falla": "Fallo interno grave (Sobrevoltaje)",
+                "referencia": "2Z8",
+                "soluciones": [
+                  "Verificar el regulador de voltaje y la tarjeta de control."
+                ]
+              },
+              {
+                "atributo": "LED ROJO y Alarma 'CABLEADO INCORRECTO'",
+                "falla": "Fallo interno grave (Cableado Incorrecto)",
+                "referencia": "28",
+                "soluciones": [
+                  "Revisar todo el cableado de control según el diagrama."
+                ]
+              }
+            ]
+          },
+          {
+            "atributo": "La unidad se para durante el funcionamiento",
+            "pregunta": "¿Qué luz LED ve y qué alarma muestra la pantalla?",
+            "ramas": [
+              {
+                "atributo": "LED ROJO y Alarma 'ALTA TEMPERATURA'",
+                "falla": "Alta temperatura del motor",
+                "referencia": "27",
+                "soluciones": [
+                  "Compruebe la ventilación alrededor de la admisión, el escape y la parte trasera del generador.",
+                  "Si no hay obstrucciones, verificar el sensor de temperatura."
+                ]
+              },
+              {
+                "atributo": "LED ROJO y Alarma 'SOBRECARGA, RETIRAR LA CARGA'",
+                "falla": "Sobrecarga",
+                "referencia": "27",
+                "soluciones": [
+                  "Borre la alarma y retire las cargas domésticas del generador.",
+                  "Coloque de vuelta en AUTO y vuelva a arrancar.",
+                  "Si la falla persiste sin carga, verificar el disyuntor (breaker)."
+                ]
+              }
+            ]
+          },
+          {
+            "atributo": "El LED amarillo se enciende",
+            "pregunta": "¿Qué alarma o mensaje muestra la pantalla?",
+            "ramas": [
+              {
+                "atributo": "Alarma 'CARGA BAJA DE BATERÍA'",
+                "falla": "Carga baja de batería",
+                "referencia": "28",
+                "soluciones": [
+                  "Borre la alarma.",
+                  "Del menú PRINCIPAL en el tablero de control, desplácese al MENÚ DE BATERÍA.",
+                  "Sustituya la batería si se muestra COMPROBAR BATERÍA."
+                ]
+              },
+              {
+                "atributo": "Mensaje 'SERVICIO A'",
+                "falla": "Mantenimiento programado requerido (A)",
+                "referencia": "28",
+                "soluciones": [
+                  "Efectúe el programa de mantenimiento A.",
+                  "Pulse ENTER para borrar el mensaje."
+                ]
+              },
+              {
+                "atributo": "Mensaje 'SERVICIO B'",
+                "falla": "Mantenimiento programado requerido (B)",
+                "referencia": "28",
+                "soluciones": [
+                  "Efectúe el programa de mantenimiento B.",
+                  "Pulse ENTER para borrar el mensaje."
+                ]
+              },
+              {
+                "atributo": "Mensaje 'Inspección de la batería'",
+                "falla": "Mantenimiento programado requerido (Batería)",
+                "referencia": "28",
+                "soluciones": [
+                  "Inspeccione la batería.",
+                  "Pulse ENTER para borrar el mensaje."
+                ]
+              },
+              {
+                "atributo": "Alarma 'PROBLEMA DE BATERÍA'",
+                "falla": "Problema con la batería",
+                "referencia": "28",
+                "soluciones": [
+                  "Verificar conexiones de batería, bornes y nivel de electrolito.",
+                  "Reemplazar batería si es necesario."
+                ]
+              },
+              {
+                "atributo": "Alarma 'ADVERTENCIA DEL CARGADOR'",
+                "falla": "Problema con el cargador de batería",
+                "referencia": "28",
+                "soluciones": [
+                  "Verificar el voltaje de entrada y salida del cargador.",
+                  "Revisar el circuito del cargador."
                 ]
               }
             ]
@@ -491,26 +461,22 @@
       },
       {
         "atributo": "Otros problemas de funcionamiento",
+        "pregunta": "¿Cuál es el síntoma?",
         "ramas": [
           {
-            "pregunta": "¿Cuál es el síntoma?",
-            "ramas": [
-              {
-                "atributo": "El generador está en OFF, pero el motor sigue funcionando",
-                "falla": "Botón defectuoso, cableado incorrecto o tarjeta de control defectuosa",
-                "referencia": "27",
-                "soluciones": [
-                  "Repare el cableado o sustituya el interruptor/tarjeta."
-                ]
-              },
-              {
-                "atributo": "No hay salida de CA del generador",
-                "falla": "El disyuntor principal de línea se encuentra en la posición OFF (o ABIERTO)",
-                "referencia": "2G7",
-                "soluciones": [
-                  "Reconecte el disyuntor a ON (CERRADO)."
-                ]
-              }
+            "atributo": "El generador está en OFF, pero el motor sigue funcionando",
+            "falla": "Botón defectuoso, cableado incorrecto o tarjeta de control defectuosa",
+            "referencia": "27",
+            "soluciones": [
+              "Repare el cableado o sustituya el interruptor/tarjeta."
+            ]
+          },
+          {
+            "atributo": "No hay salida de CA del generador",
+            "falla": "El disyuntor principal de línea se encuentra en la posición OFF (o ABIERTO)",
+            "referencia": "2G7",
+            "soluciones": [
+              "Reconecte el disyuntor a ON (CERRADO)."
             ]
           }
         ]
