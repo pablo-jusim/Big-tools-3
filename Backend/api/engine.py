@@ -55,25 +55,36 @@ class MotorInferencia:
         if not self.nodo_actual:
             return {"mensaje": "El diagnóstico no se ha iniciado. Use 'iniciar_diagnostico'."}
 
-        # Buscamos en las ramas del nodo actual
-        # un nodo hijo cuyo 'nombre' coincida con la 'respuesta_atributo'.
-        # (Tu nodo.py se encarga de que "atributo" se vuelva "nombre")
+        # 1. Encontrar el siguiente nodo basado en la respuesta
         siguiente_nodo = self.nodo_actual.find_rama_by_nombre(respuesta_atributo)
 
         if not siguiente_nodo:
-            # El usuario envió una respuesta que no existe en las opciones
             print(f"Error en motor: Respuesta '{respuesta_atributo}' no encontrada en nodo '{self.nodo_actual.nombre}'.")
             return self._pregunta_actual() # Devolvemos la pregunta actual
 
-        # Avanzar al siguiente nodo
+        # 2. Avanzar al siguiente nodo
         self.nodo_actual = siguiente_nodo
         self.ruta.append(siguiente_nodo)
 
-        # Si llegamos a un nodo hoja (falla), devolvemos el resultado final
+        # 3. --- LÓGICA DE AUTO-AVANCE (LA CORRECCIÓN) ---
+        # Si el nodo al que llegamos (ej: "Una luz parpadea")
+        # NO tiene pregunta, pero SÍ tiene una única rama que SÍ tiene pregunta,
+        # significa que es un "contenedor" y debemos avanzar automáticamente.
+        if (not self.nodo_actual.pregunta and 
+            self.nodo_actual.ramas and 
+            len(self.nodo_actual.ramas) == 1 and 
+            self.nodo_actual.ramas[0].pregunta):
+            
+            # Avanzamos al nodo hijo (ej: al nodo "¿Qué luz parpadea?")
+            self.nodo_actual = self.nodo_actual.ramas[0]
+            self.ruta.append(self.nodo_actual)
+        
+        # 4. Comprobar si hemos llegado a una falla
         if self.nodo_actual.es_hoja():
             return self._resultado_final(self.nodo_actual)
 
-        # Si no, devolvemos la siguiente pregunta
+        # 5. Si no es una falla, devolver la pregunta actual
+        # (Ahora sí, self.nodo_actual es el nodo correcto de la pregunta)
         return self._pregunta_actual()
 
     # -------------------------------------------------------------------------
@@ -90,12 +101,11 @@ class MotorInferencia:
         # El texto de la pregunta está en 'nodo.pregunta'
         texto_pregunta = self.nodo_actual.pregunta
         if not texto_pregunta:
-             # Fallback si el nodo no tiene pregunta (no debería pasar si el JSON está bien)
+             # Fallback si el nodo no tiene pregunta
              texto_pregunta = f"¿Qué observa en '{self.nodo_actual.nombre}'?"
 
-        # --- CORRECCIÓN CLAVE PARA BOTONES VACÍOS ---
         # Las opciones son el 'nombre' de cada nodo hijo.
-        # Tu nodo.py (vía from_dict) convierte "atributo": "..." en nodo.nombre = "..."
+        # (Tu nodo.py convierte "atributo": "..." en nodo.nombre = "...")
         opciones = [r.nombre for r in self.nodo_actual.ramas if r.nombre]
         
         return {

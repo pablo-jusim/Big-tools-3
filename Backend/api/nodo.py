@@ -41,8 +41,6 @@ class Nodo:
     def es_hoja(self) -> bool:
         """Determina si el nodo es una hoja (tiene una falla)."""
         # Un nodo es una hoja si tiene un diagnóstico de "falla".
-        # No usamos "len(self.ramas) == 0" porque un nodo puede ser
-        # una falla y aun así podríamos querer agregarle ramas en el futuro.
         return self.falla is not None
 
     def find_rama_by_nombre(self, nombre_buscado: str) -> Optional['Nodo']:

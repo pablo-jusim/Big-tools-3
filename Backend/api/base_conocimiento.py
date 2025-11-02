@@ -7,7 +7,8 @@ Adaptado a la ESTRUCTURA SIMPLIFICADA (sin "categorias")
 from typing import Dict, Any, List, Optional
 import json
 from pathlib import Path
-from Backend.api.nodo import Nodo # Asumimos que nodo.py existe y está correcto
+# Asegúrate de que Backend.api.nodo existe y está correcto
+from Backend.api.nodo import Nodo 
 
 JSON_LATEST = 1
 DEFAULT_JSON = "Backend/data/base_conocimiento.json" 
@@ -23,9 +24,7 @@ class BaseConocimiento:
         self.archivo_path = Path(archivo_json)
         self.description = "Base de conocimientos de máquinas"
         
-        # CAMBIO CLAVE:
-        # self.maquinas ya no es Dict[str, List[Nodo]]
-        # Ahora es un diccionario que mapea el nombre de la máquina a su ÚNICO Nodo raíz.
+        # Clave: nombre_maquina, Valor: Nodo raíz de esa máquina
         self.maquinas: Dict[str, Nodo] = {} 
         
         self.from_json(self.archivo_path) # carga automática al instanciar
@@ -58,13 +57,20 @@ class BaseConocimiento:
         self.description = data.get("description", self.description)
         self.maquinas = {}
 
-        # --- LÓGICA DE CARGA MODIFICADA ---
-        # Ahora data.items() son (nombre_maquina, arbol_dict)
+        # --- LÓGICA DE CARGA MODIFICADA (AQUÍ ESTÁ LA CORRECCIÓN) ---
         for nombre_maquina, arbol_dict in data.items():
-            if nombre_maquina.startswith("__"): # Ignorar __v y description
-                continue
+            
+            # --- CORRECCIÓN ---
+            # Filtro robusto: Ignora claves de metadatos O CUALQUIER VALOR que no sea un diccionario
+            if nombre_maquina.startswith("__") or not isinstance(arbol_dict, dict):
+                continue # Ignorar "__v", "description", y cualquier otra clave simple.
+            
+            # --- FIN DE LA CORRECCIÓN ---
+
+            # Ahora estamos seguros de que arbol_dict es un diccionario (el árbol de la máquina)
             
             # Asignamos el nombre de la máquina al nodo raíz para coherencia
+            # (El nodo.py usará esto si "atributo" no existe)
             arbol_dict['nombre'] = nombre_maquina 
             
             # Convertimos el diccionario del árbol de la máquina en un objeto Nodo
@@ -86,10 +92,14 @@ class BaseConocimiento:
 
         for nombre_maquina, nodo_raiz in self.maquinas.items():
             # Convertimos el Nodo raíz de nuevo a un diccionario
-            obj[nombre_maquina] = nodo_raiz.to_dict()
-            # Opcional: limpiar el 'nombre' que agregamos al cargar
-            if 'nombre' in obj[nombre_maquina]:
-                 del obj[nombre_maquina]['nombre'] 
+            dict_para_guardar = nodo_raiz.to_dict()
+            
+            # Limpiamos el 'nombre' (atributo) del nodo raíz, 
+            # ya que el nombre de la máquina es la clave.
+            if 'atributo' in dict_para_guardar:
+                 del dict_para_guardar['atributo']
+
+            obj[nombre_maquina] = dict_para_guardar
 
 
         data = json.dumps(obj, indent=2, ensure_ascii=False)
@@ -107,14 +117,18 @@ class BaseConocimiento:
 
     def get_arbol_maquina(self, nombre_maquina: str) -> Optional[Nodo]:
         """Devuelve el NODO RAÍZ de una máquina específica."""
-        return self.maquinas.get(nombre_maquina)
+        nodo = self.maquinas.get(nombre_maquina)
+        if not nodo:
+             raise ValueError(f"No se encontró la máquina: {nombre_maquina}")
+        return nodo
+
 
     # --- MÉTODOS DE EDICIÓN (para las nuevas funciones) ---
 
     def agregar_maquina(self, nombre_maquina: str) -> bool:
         """Agrega una nueva máquina (vacía) a la base."""
         if nombre_maquina in self.maquinas:
-            return False # Ya existe
+            raise ValueError(f"La máquina '{nombre_maquina}' ya existe.")
 
         # Creamos un nodo raíz vacío para la nueva máquina
         self.maquinas[nombre_maquina] = Nodo(
@@ -132,36 +146,43 @@ class BaseConocimiento:
         """
         nodo_actual = self.get_arbol_maquina(nombre_maquina)
         if nodo_actual is None:
-            return None
+            return None # La máquina no existe
 
+        # Recorremos el path para encontrar el nodo padre
         for nombre_atributo in path:
             siguiente_nodo = nodo_actual.find_rama_by_nombre(nombre_atributo)
             if siguiente_nodo is None:
                 # El path está roto o no existe
-                return None 
+                raise ValueError(f"No se pudo encontrar el síntoma '{nombre_atributo}' en la ruta.")
             nodo_actual = siguiente_nodo
             
         return nodo_actual
 
-    def agregar_nodo(self, nombre_maquina: str, path_padre: List[str], nuevo_nodo_data: dict) -> bool:
+    def agregar_nodo(self, nombre_maquina: str, path_padre: List[str], nuevo_nodo_dict: dict) -> bool:
         """
-        Agrega un nuevo nodo (síntoma, falla o pregunta) en una ubicación
+        Agrega un nuevo nodo (síntoma o falla) en una ubicación
         específica del árbol.
         """
         # 1. Encontrar el nodo padre donde queremos agregar la rama
         nodo_padre = self.find_nodo_by_path(nombre_maquina, path_padre)
         if nodo_padre is None:
             raise ValueError("El path (ruta) al nodo padre no existe.")
+            
+        if nodo_padre.es_hoja():
+            raise ValueError("No se puede agregar una rama a un nodo que ya es una falla.")
 
         # 2. Convertir los datos del nuevo nodo en un objeto Nodo
-        nuevo_nodo = Nodo.from_dict(nuevo_nodo_data)
+        nuevo_nodo = Nodo.from_dict(nuevo_nodo_dict)
         
+        if not nuevo_nodo.nombre:
+             raise ValueError("El nuevo síntoma o falla debe tener un 'atributo' (nombre).")
+
         # 3. Validar que no sea un duplicado
         if nodo_padre.find_rama_by_nombre(nuevo_nodo.nombre):
              raise ValueError(f"El síntoma/atributo '{nuevo_nodo.nombre}' ya existe en este nivel.")
 
         # 4. Agregar la nueva rama
-        nodo_padre.ramas.append(nuevo_nodo)
+        nodo_padre.agregar_rama(nuevo_nodo)
         
         # 5. Guardar toda la base de conocimientos en el archivo
         self.to_json() 
@@ -178,7 +199,7 @@ class BaseConocimiento:
             raise ValueError("El path (ruta) al nodo de falla no existe.")
         
         if not nodo_falla.es_hoja():
-             raise ValueError("El nodo seleccionado no es un nodo de falla (aún tiene ramas).")
+             raise ValueError("El nodo seleccionado no es un nodo de falla (aún tiene ramas o no tiene 'falla').")
              
         # 2. Agregar la solución
         if nueva_solucion not in nodo_falla.soluciones:
@@ -187,7 +208,8 @@ class BaseConocimiento:
             # 3. Guardar cambios
             self.to_json()
             return True
-        return False # La solución ya existía
+        
+        raise ValueError("La solución ya existe para esta falla.")
 
     def __str__(self):
         resumen = f"{self.description}\nMáquinas registradas: {', '.join(self.listar_maquinas())}"
