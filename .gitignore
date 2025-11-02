@@ -48,3 +48,8 @@ yarn-error.log*
 *.tmp
 *.backup
 *.~*
+
+# -------------------------
+# Archivos de prueba y desarrollo local
+# -------------------------
+Backend\data\base_conocimiento - copia.json

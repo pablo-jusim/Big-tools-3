@@ -258,6 +258,24 @@ body {
     background-color: #e0e0e0;
 }
 
+/* Agrupación para los botones de agregar manualmente */
+#manual-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+#manual-add-button,
+#manual-add-falla,
+#manual-add-solucion {
+    min-width: 180px;
+    /* Así lucen consistentes y anchos aun si el texto cambia */
+    margin-left: 5px;
+}
+
+
 /* ---------------------------
    Responsive
 ---------------------------- */

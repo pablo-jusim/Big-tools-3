@@ -1,186 +1,128 @@
 """
 engine.py
 Motor de inferencia del sistema experto de diagnóstico de máquinas.
-Adaptado a flujo de categorías y opciones fijas.
-Compatible con BaseConocimiento y Nodo actuales.
+Adaptado a la ESTRUCTURA SIMPLIFICADA (sin "categorias").
 """
 
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from Backend.api.base_conocimiento import BaseConocimiento
 from Backend.api.nodo import Nodo
-
 
 class MotorInferencia:
     """
     Motor que recorre el árbol de conocimiento de una máquina,
-    procesando respuestas de selección múltiple,
-    hasta detectar la falla y ofrecer posibles soluciones.
+    procesando respuestas (atributos) hasta detectar la falla.
     """
 
     def __init__(self, base: BaseConocimiento):
         self.base = base
-        self.resultado: Optional[Nodo] = None
         self.maquina_actual: Optional[str] = None
-        self.categorias: List[Nodo] = []
         self.nodo_actual: Optional[Nodo] = None
         self.ruta: List[Nodo] = []
+        # Path de atributos hasta la última pregunta
+        self.path_pregunta_actual: List[str] = []
 
-    # -------------------------------------------------------------------------
-    # MÉTODOS PRINCIPALES
-    # -------------------------------------------------------------------------
+    # ------------------- FLUJO PRINCIPAL ---------------------
 
     def iniciar_diagnostico(self, nombre_maquina: str) -> dict:
         """
-        Inicializa el diagnóstico para una máquina.
-        Devuelve la lista de categorías disponibles.
+        Inicia el diagnóstico cargando el nodo raíz y devolviendo la primera pregunta.
         """
         self.maquina_actual = nombre_maquina
-        self.categorias = self.base.maquinas.get(nombre_maquina, [])
 
-        if not self.categorias:
-            raise ValueError(f"No hay categorías disponibles para la máquina '{nombre_maquina}'.")
+        nodo_raiz = self.base.get_arbol_maquina(nombre_maquina) 
+        if not nodo_raiz:
+            raise ValueError(f"No se encontró la máquina '{nombre_maquina}'.")
 
-        self.resultado = None
-        self.nodo_actual = None
-        self.ruta = []
+        self.nodo_actual = nodo_raiz
+        self.ruta = [nodo_raiz]
+        self.path_pregunta_actual = []  # El nodo raíz es la primera pregunta
 
-        # Retornamos las categorías para que el frontend las muestre
-        return {"categorias": [cat.nombre for cat in self.categorias]}
-
-    def seleccionar_categoria(self, categoria: str) -> dict:
-        """
-        Selecciona una categoría dentro de la máquina y devuelve la primera pregunta.
-        Añade lógica para "avanzar" si la categoría es solo un contenedor.
-        """
-        nodo = next((c for c in self.categorias if c.nombre == categoria), None)
-        if not nodo:
-            raise ValueError(f"No se encontró la categoría '{categoria}' en la máquina '{self.maquina_actual}'.")
-
-        self.nodo_actual = nodo
-        self.ruta = [nodo]
-
-        # Si la categoría es un nodo hoja directo (ej: "El aparato no funciona")
-        if nodo.es_hoja():
-            self.resultado = nodo
-            return self._resultado_final(nodo)
-        
-        # Si el nodo de categoría NO tiene pregunta, pero SÍ tiene ramas,
-        # es un contenedor. Debemos avanzar automáticamente.
-        if not nodo.pregunta and nodo.ramas:
-            
-            # Caso 1: La categoría apunta a una falla directa 
-            # (Ej: "El aparato no funciona / no se pone en marcha")
-            if len(nodo.ramas) == 1 and nodo.ramas[0].es_hoja():
-                self.nodo_actual = nodo.ramas[0]
-                self.ruta.append(self.nodo_actual)
-                self.resultado = self.nodo_actual
-                return self._resultado_final(self.nodo_actual)
-
-            # Caso 2: La categoría apunta a un nodo de pregunta 
-            # (Ej: "Una luz parpadea")
-            if len(nodo.ramas) == 1 and nodo.ramas[0].pregunta:
-                self.nodo_actual = nodo.ramas[0] # Avanzamos al nodo de la pregunta
-                self.ruta.append(self.nodo_actual)
-                # Ahora self.nodo_actual SÍ tiene la pregunta y las opciones correctas.
-
-        # Retornamos la pregunta y opciones del nodo actual
-        # (que ahora es el nodo de pregunta correcto, no el de categoría)
         return self._pregunta_actual()
 
-    def avanzar(self, respuesta: str) -> dict:
+    def avanzar(self, respuesta_atributo: str) -> dict:
         """
-        Avanza un paso en el árbol según la opción seleccionada por el usuario.
+        Avanza un paso en el árbol según la opción seleccionada.
         """
         if not self.nodo_actual:
-            return {"error": "No se ha seleccionado una categoría. Use 'seleccionar_categoria'."}
+            return {"mensaje": "El diagnóstico no se ha iniciado. Use 'iniciar_diagnostico'."}
 
-        nodo = self.nodo_actual
+        # Buscar el hijo según el atributo seleccionado
+        siguiente_nodo = self.nodo_actual.find_rama_by_nombre(respuesta_atributo)
+        if not siguiente_nodo:
+            print(f"Error en motor: Respuesta '{respuesta_atributo}' no encontrada en nodo '{self.nodo_actual.nombre}'.")
+            return self._pregunta_actual()
 
-        # Buscar la rama correspondiente a la respuesta (nombre, atributo o categoria)
-        siguiente = next(
-            (r for r in nodo.ramas
-             if r.nombre == respuesta
-             or getattr(r, "atributo", None) == respuesta
-             or getattr(r, "categoria", None) == respuesta),
-            None
-        )
+        self.nodo_actual = siguiente_nodo
+        self.ruta.append(siguiente_nodo)
 
-        if not siguiente:
-            # Opciones disponibles si no se encuentra la respuesta
-            opciones = [r.nombre or getattr(r, "atributo", "") or getattr(r, "categoria", "")
-                        for r in nodo.ramas]
-            return {
-                "mensaje": f"No se encontró la opción '{respuesta}'.",
-                "opciones": opciones
-            }
+        # Avance automático sobre contenedores mudos (nodo sin pregunta y con una sola rama)
+        while (
+            not self.nodo_actual.pregunta
+            and self.nodo_actual.ramas 
+            and len(self.nodo_actual.ramas) == 1
+        ):
+            hijo_unico = self.nodo_actual.ramas[0]
+            self.nodo_actual = hijo_unico
+            self.ruta.append(hijo_unico)
+            if self.nodo_actual.es_hoja():
+                # No actualizamos path_pregunta_actual: queda atascado en el padre
+                return self._resultado_final(self.nodo_actual)
 
-        # Avanzar al siguiente nodo
-        self.nodo_actual = siguiente
-        self.ruta.append(siguiente)
+        # Si es hoja (tiene una falla), devolver resultado final
+        if self.nodo_actual.es_hoja():
+            # path_pregunta_actual no cambia (queda detenido en el nodo de pregunta padre)
+            return self._resultado_final(self.nodo_actual)
 
-        # Si llegamos a un nodo hoja, devolvemos el resultado final
-        if siguiente.es_hoja():
-            self.resultado = siguiente
-            return self._resultado_final(siguiente)
-
-        # Si el nodo actual tiene pregunta y opciones
+        # Si es una pregunta, actualizar path hasta este punto
+        self.path_pregunta_actual = self.get_historial_path_completo()
         return self._pregunta_actual()
 
-    # -------------------------------------------------------------------------
-    # MÉTODOS AUXILIARES
-    # -------------------------------------------------------------------------
+    # ------------------- FUNCIONES AUXILIARES ----------------
 
     def _pregunta_actual(self) -> dict:
         """
         Devuelve la pregunta y las opciones del nodo actual.
         """
-        nodo = self.nodo_actual
-        if nodo is None:
+        if self.nodo_actual is None:
             return {"mensaje": "No hay un nodo activo en el diagnóstico."}
+        
+        texto_pregunta = self.nodo_actual.pregunta
+        if not texto_pregunta:
+            texto_pregunta = f"¿Qué observa en '{self.nodo_actual.nombre}'?"
 
-        # Determinar el texto de la pregunta
-        if nodo.pregunta:
-            texto_pregunta = nodo.pregunta
-        elif getattr(nodo, "categoria", None):
-            texto_pregunta = f"Elige una opción dentro de la categoría '{nodo.categoria}':"
-        elif nodo.nombre:
-            texto_pregunta = f"Selecciona una opción relacionada con '{nodo.nombre}':"
-        else:
-            texto_pregunta = "Selecciona una opción:"
+        opciones = [r.nombre for r in self.nodo_actual.ramas if r.nombre]
+        return {"pregunta": texto_pregunta, "opciones": opciones}
 
-        # Generar lista de opciones (usa nombre, atributo o categoría)
-        opciones = []
-        if nodo.ramas:
-            for r in nodo.ramas:
-                if r.nombre:
-                    opciones.append(r.nombre)
-                elif getattr(r, "atributo", None):
-                    opciones.append(r.atributo)
-                elif getattr(r, "categoria", None):
-                    opciones.append(r.categoria)
-
-        return {
-            "pregunta": texto_pregunta,
-            "opciones": opciones
-        }
-
-    def _resultado_final(self, nodo: Nodo) -> dict:
+    def _resultado_final(self, nodo_falla: Nodo) -> dict:
         """
-        Devuelve el resultado final del diagnóstico.
+        Devuelve el resultado final del diagnóstico (una hoja).
         """
         return {
-            "maquina": self.maquina_actual,
-            "falla": nodo.falla,
-            "referencia": getattr(nodo, "referencia", None),
-            "soluciones": nodo.soluciones
+            "falla": nodo_falla.falla,
+            "soluciones": nodo_falla.soluciones,
+            "referencia": nodo_falla.referencia
         }
+
+    def get_historial_path_completo(self) -> List[str]:
+        """
+        Devuelve los atributos seleccionados hasta el nodo actual (sin incluir el raíz).
+        """
+        if not self.ruta or len(self.ruta) < 2:
+            return []
+        return [nodo.nombre for nodo in self.ruta[1:]]
+
+    def get_path_a_pregunta(self) -> List[str]:
+        """
+        Devuelve el path de atributos hasta el último nodo de pregunta alcanzado.
+        """
+        return self.path_pregunta_actual
 
     def reiniciar(self):
         """
         Reinicia el motor para un nuevo diagnóstico.
         """
-        self.resultado = None
         self.nodo_actual = None
         self.maquina_actual = None
-        self.categorias = []
         self.ruta = []
+        self.path_pregunta_actual = []
