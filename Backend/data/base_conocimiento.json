@@ -1,8 +1,11 @@
 {
+  "__v": 1,
+  "description": "Base de conocimiento de máquinas v2 (Simplificada)",
   "hidrolavadora_karcher": {
-    "categorias": [
+    "pregunta": "¿Cuál es el síntoma principal que observa?",
+    "ramas": [
       {
-        "categoria": "El aparato no funciona o no se pone en marcha",
+        "atributo": "El aparato no funciona o no se pone en marcha",
         "ramas": [
           {
             "falla": "No hay tensión de red",
@@ -14,7 +17,7 @@
         ]
       },
       {
-        "categoria": "Una luz parpadea",
+        "atributo": "Una luz parpadea",
         "ramas": [
           {
             "pregunta": "¿Qué luz parpadea?",
@@ -143,7 +146,7 @@
         ]
       },
       {
-        "categoria": "Una luz está encendida (fija)",
+        "atributo": "Una luz está encendida (fija)",
         "ramas": [
           {
             "pregunta": "¿Qué luz está encendida?",
@@ -169,7 +172,7 @@
         ]
       },
       {
-        "categoria": "El aparato no genera presión",
+        "atributo": "El aparato no genera presión",
         "ramas": [
           {
             "pregunta": "¿Cuál es la causa probable?",
@@ -206,7 +209,7 @@
         ]
       },
       {
-        "categoria": "El quemador no se enciende (el agua no calienta)",
+        "atributo": "El quemador no se enciende (el agua no calienta)",
         "ramas": [
           {
             "pregunta": "¿Cuál es la causa probable?",
@@ -251,9 +254,10 @@
     ]
   },
   "generador_generac": {
-    "categorias": [
+    "pregunta": "¿Cuál es el síntoma principal del generador?",
+    "ramas": [
       {
-        "categoria": "Problemas de arranque del motor",
+        "atributo": "Problemas de arranque del motor",
         "ramas": [
           {
             "pregunta": "¿Cuál es el síntoma exacto?",
@@ -307,7 +311,7 @@
         ]
       },
       {
-        "categoria": "Problemas con luces LED o alarmas",
+        "atributo": "Problemas con luces LED o alarmas",
         "ramas": [
           {
             "pregunta": "¿Cuál es el síntoma?",
@@ -486,7 +490,7 @@
         ]
       },
       {
-        "categoria": "Otros problemas de funcionamiento",
+        "atributo": "Otros problemas de funcionamiento",
         "ramas": [
           {
             "pregunta": "¿Cuál es el síntoma?",
