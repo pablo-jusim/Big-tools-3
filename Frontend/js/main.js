@@ -1,4 +1,10 @@
-// main.js
+/**
+ * main.js - Controlador principal para la interfaz de chat del sistema experto Big Tools.
+ * Permite agregar máquinas, síntomas terminales, fallas y soluciones bajo reglas específicas.
+ * La referencia de toda falla ingresada desde el frontend será siempre "Ingresado por usuario" 
+ * o "Ingresado por usuario: [texto]" si el usuario provee un texto.
+ */
+
 document.addEventListener("DOMContentLoaded", () => {
 
     // ---- Elementos del DOM ----
@@ -19,7 +25,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let datosFallaNueva = null;    // info nueva falla para restructuración
     let datosFallaExistente = null; // info falla "vieja" (la que estaba)
 
-    // ----
+    /**
+     * Actualiza visibilidad y títulos de los botones manuales según la etapa.
+     */
     function actualizarBotonManual(etapa) {
         manualBtn.style.display      = "none";
         manualBtnFalla.style.display = "none";
@@ -36,6 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    /** Agrega un mensaje al chat */
     function addMessage(text, sender = "bot") {
         const messageDiv = document.createElement("div");
         messageDiv.classList.add("message", sender);
@@ -44,6 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
+    /** Agrega botones de opciones al chat y configura el callback */
     function addOptions(options, callback) {
         const optionsWrapper = document.createElement("div");
         optionsWrapper.classList.add("bot-options");
@@ -69,6 +79,9 @@ document.addEventListener("DOMContentLoaded", () => {
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
+    /**
+     * Procesa la respuesta del backend y actualiza el flujo conversacional.
+     */
     function handleApiResponse(response) {
         datosFallaNueva = null;
         datosFallaExistente = null;
@@ -89,7 +102,6 @@ document.addEventListener("DOMContentLoaded", () => {
             addMessage(solHTML);
             sessionState = "falla";
             cum_state.falla_actual = response.falla;
-            // Guardar datos de la falla-actual HOJA (para restructuración directa)
             datosFallaExistente = {
                 falla: response.falla,
                 soluciones: response.soluciones,
@@ -104,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // ---- FLUJO INICIAL Y OPCIONES ----
+    /** Reinicia el chat y carga las máquinas */
     async function startChat() {
         chatWindow.innerHTML = "";
         sessionState = 'maquina';
@@ -123,6 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    /** Selecciona máquina y arranca el flujo de opciones */
     async function handleMachineSelection(machineName) {
         cum_state.maquina = machineName;
         sessionState = 'sintoma';
@@ -142,6 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    /** Avanza el árbol según la opción elegida por el usuario */
     async function handleOptionSelection(respuesta) {
         cum_state.sintomas.push(respuesta);
         sessionState = 'sintoma';
@@ -169,9 +183,117 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // ---- BOTONES MANUALES ----
+    /**
+     * Construye HTML para el formulario de agregar máquina o síntoma.
+     * @param {string} etapa - "maquina" o "sintoma"
+     * @returns {string} HTML
+     */
+    function getAgregarSimpleFormHTML(etapa) {
+        let formHTML = `<form id="addForm">`;
+        formHTML += "<h4>Contexto Actual:</h4>";
+        if (!cum_state.maquina && etapa !== "maquina") {
+            formHTML += "<p>No se ha seleccionado máquina.</p>";
+        } else if (cum_state.maquina) {
+            formHTML += `<p><strong>Máquina:</strong> ${cum_state.maquina}</p>`;
+        }
+        if (cum_state.sintomas.length > 0 && etapa !== "maquina") {
+            formHTML += `<p><strong>Síntomas seguidos:</strong></p><ol>${cum_state.sintomas.map(s => `<li>${s}</li>`).join('')}</ol>`;
+        }
+        formHTML += "<hr><h4>Datos a Agregar:</h4>";
 
-    // AGREGAR FALLA: SIEMPRE PASO 1 + PASO 2
+        if (etapa === "maquina") {
+            formHTML += `<label for="nombre">Nombre de la nueva máquina:</label><br>`;
+            formHTML += `<input type="text" id="nombre" name="nombre" required style="width: 90%;"><br><br>`;
+            formHTML += `<label for="atributo">Primer síntoma principal (atributo):</label><br>`;
+            formHTML += `<input type="text" id="atributo" name="atributo" required style="width: 90%;"><br><br>`;
+            formHTML += `<label for="falla">Primera falla (descripción):</label><br>`;
+            formHTML += `<input type="text" id="falla" name="falla" required style="width: 90%;"><br><br>`;
+            formHTML += `<label for="soluciones">Soluciones (separadas por coma ','):</label><br>`;
+            formHTML += `<textarea id="soluciones" name="soluciones" rows="3" style="width: 90%;"></textarea><br>`;
+            formHTML += `<label for="referencia">Referencia (opcional):</label><br>`;
+            formHTML += `<input type="text" id="referencia" name="referencia" style="width: 90%;"><br>`;
+        } else if (etapa === "sintoma") {
+            formHTML += `<label for="atributo">Texto de la opción (atributo):</label><br>`;
+            formHTML += `<input type="text" id="atributo" name="atributo" required style="width: 90%;"><br><br>`;
+            formHTML += `<label for="falla">Descripción de la falla (diagnóstico terminal):</label><br>`;
+            formHTML += `<input type="text" id="falla" name="falla" required style="width: 90%;"><br><br>`;
+            formHTML += `<label for="soluciones">Soluciones (separadas por coma ','):</label><br>`;
+            formHTML += `<textarea id="soluciones" name="soluciones" rows="3" style="width: 90%;"></textarea><br>`;
+            formHTML += `<label for="referencia">Referencia (opcional):</label><br>`;
+            formHTML += `<input type="text" id="referencia" name="referencia" style="width: 90%;"><br>`;
+        }
+        formHTML += `<br><button type="submit">Guardar</button>`;
+        formHTML += `</form>`;
+        return formHTML;
+    }
+
+    /**
+     * Abre la ventana emergente para agregar máquina/síntoma con formulario y lógica de referencia.
+     * @param {string} etapa - "maquina" o "sintoma"
+     */
+    function abrirVentanaAgregarSimple(etapa) {
+        const popup = window.open("", `Agregar${etapa}`, "width=500,height=600,scrollbars=yes,resizable=yes");
+        if (!popup) { alert("Por favor, habilite las ventanas emergentes."); return; }
+        popup.document.write("<html><head><title>Agregar Conocimiento</title></head><body>");
+        popup.document.write("<h2>Agregar Nuevo Conocimiento</h2>");
+        popup.document.write(getAgregarSimpleFormHTML(etapa));
+
+        popup.document.getElementById("addForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            let url = "";
+            let body = {};
+            // Lógica para construir referencia final
+            function referenciaFinal(userRefValue) {
+                let userValue = userRefValue ? userRefValue.trim() : "";
+                return userValue ? ("Ingresado por usuario: " + userValue) : "Ingresado por usuario";
+            }
+            if (etapa === "maquina") {
+                url = `${API_URL}/agregar/maquina`;
+                let atributo = popup.document.getElementById("atributo").value;
+                let falla    = popup.document.getElementById("falla").value;
+                let soluciones = popup.document.getElementById("soluciones").value.split(',').map(s => s.trim()).filter(s => s);
+                let nombre   = popup.document.getElementById("nombre").value;
+                let refUser  = popup.document.getElementById("referencia").value;
+                let referencia = referenciaFinal(refUser);
+
+                body = {
+                    nombre: nombre,
+                    primer_rama: {
+                        atributo: atributo,
+                        falla: falla,
+                        soluciones: soluciones,
+                        referencia: referencia
+                    }
+                };
+            } else if (etapa === "sintoma") {
+                url = `${API_URL}/agregar/sintoma/${ID_SESION}`;
+                let refUser  = popup.document.getElementById("referencia").value;
+                let referencia = referenciaFinal(refUser);
+                body = {
+                    atributo: popup.document.getElementById("atributo").value,
+                    falla: popup.document.getElementById("falla").value,
+                    soluciones: popup.document.getElementById("soluciones").value.split(',').map(s => s.trim()).filter(s => s),
+                    referencia: referencia
+                };
+            }
+            try {
+                const res = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || "Error desconocido");
+                addMessage(`✅ ${data.message}`, "bot");
+                popup.close();
+                startChat();
+            } catch (error) {
+                popup.alert(`Error al guardar: ${error.message}`);
+            }
+        });
+    }
+
+    /** Abre la ventana para agregar una nueva falla en dos pasos (con restructuración si hace falta) */
     function abrirVentanaAgregarFalla_Paso1() {
         if (!cum_state.falla_actual || !datosFallaExistente) {
             alert("Para restructurar debe estar viendo una falla existente.");
@@ -201,18 +323,19 @@ document.addEventListener("DOMContentLoaded", () => {
         popup.document.write(formHTML);
         popup.document.getElementById("addFallaForm").addEventListener("submit", (e) => {
             e.preventDefault();
-            // Guarda los datos de la nueva falla TEMPORALMENTE
+            let refUser  = popup.document.getElementById("referencia").value;
+            let referencia = refUser && refUser.trim() ? ("Ingresado por usuario: " + refUser.trim()) : "Ingresado por usuario";
             datosFallaNueva = {
                 falla: popup.document.getElementById("falla").value,
                 soluciones: popup.document.getElementById("soluciones").value.split(',').map(s => s.trim()).filter(s => s),
-                referencia: popup.document.getElementById("referencia").value || null,
+                referencia: referencia,
                 atributo: popup.document.getElementById("atributo").value
             };
-            // Paso 1 -> Paso 2 (siempre mostrar ventana paso 2)
             abrirVentanaRestructura_Paso2(popup);
         });
     }
 
+    /** Abre ventana paso 2 (pregunta diferenciadora) para restructuración tras agregar nueva falla. */
     function abrirVentanaRestructura_Paso2(popup) {
         popup.document.body.innerHTML = ""; 
         popup.document.title = "Restructurar Falla (Paso 2 de 2)";
@@ -267,99 +390,48 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // ---- OTROS ----
-function abrirVentanaAgregarSimple(etapa) {
-    const popup = window.open("", `Agregar${etapa}`, "width=500,height=600,scrollbars=yes,resizable=yes");
-    if (!popup) { alert("Por favor, habilite las ventanas emergentes."); return; }
-    popup.document.write("<html><head><title>Agregar Conocimiento</title></head><body>");
-    popup.document.write("<h2>Agregar Nuevo Conocimiento</h2>");
-    let formHTML = `<form id="addForm">`;
-    formHTML += "<h4>Contexto Actual:</h4>";
-    if (!cum_state.maquina && etapa !== "maquina") {
-        formHTML += "<p>No se ha seleccionado máquina.</p>";
-    } else if (cum_state.maquina) {
-        formHTML += `<p><strong>Máquina:</strong> ${cum_state.maquina}</p>`;
-    }
-    if (cum_state.sintomas.length > 0 && etapa !== "maquina") {
-        formHTML += `<p><strong>Síntomas seguidos:</strong></p><ol>${cum_state.sintomas.map(s => `<li>${s}</li>`).join('')}</ol>`;
-    }
-    formHTML += "<hr><h4>Datos a Agregar:</h4>";
-
-    if (etapa === "maquina") {
-        formHTML += `<label for="nombre">Nombre de la nueva máquina:</label><br>`;
-        formHTML += `<input type="text" id="nombre" name="nombre" required style="width: 90%;"><br><br>`;
-        formHTML += `<label for="atributo">Primer síntoma principal (atributo):</label><br>`;
-        formHTML += `<input type="text" id="atributo" name="atributo" required style="width: 90%;"><br><br>`;
-        formHTML += `<label for="falla">Primera falla (descripción):</label><br>`;
-        formHTML += `<input type="text" id="falla" name="falla" required style="width: 90%;"><br><br>`;
-        formHTML += `<label for="soluciones">Soluciones (separadas por coma ','):</label><br>`;
-        formHTML += `<textarea id="soluciones" name="soluciones" rows="3" style="width: 90%;"></textarea><br>`;
-    } else if (etapa === "sintoma") {
-        formHTML += `<label for="atributo">Texto de la opción (atributo):</label><br>`;
-        formHTML += `<input type="text" id="atributo" name="atributo" required style="width: 90%;"><br><br>`;
-        formHTML += `<label for="falla">Descripción de la falla (diagnóstico terminal):</label><br>`;
-        formHTML += `<input type="text" id="falla" name="falla" required style="width: 90%;"><br><br>`;
-        formHTML += `<label for="soluciones">Soluciones (separadas por coma ','):</label><br>`;
-        formHTML += `<textarea id="soluciones" name="soluciones" rows="3" style="width: 90%;"></textarea><br>`;
-    }
-
-    formHTML += `<br><button type="submit">Guardar</button>`;
-    formHTML += `</form></body></html>`;
-    popup.document.write(formHTML);
-
-    popup.document.getElementById("addForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        let url = "";
-        let body = {};
-        if (etapa === "maquina") {
-            url = `${API_URL}/agregar/maquina`;
-            // Arma el nodo hoja inicial
-            let atributo = popup.document.getElementById("atributo").value;
-            let falla    = popup.document.getElementById("falla").value;
-            let soluciones = popup.document.getElementById("soluciones").value.split(',').map(s => s.trim()).filter(s => s);
-            let nombre   = popup.document.getElementById("nombre").value;
-            body = {
-                nombre: nombre,
-                // extra: info para backend, si lo adaptas:
-                primer_rama: {
-                    atributo: atributo,
-                    falla: falla,
-                    soluciones: soluciones
-                }
-            };
-        } else if (etapa === "sintoma") {
-            url = `${API_URL}/agregar/sintoma/${ID_SESION}`;
-            body = {
-                atributo: popup.document.getElementById("atributo").value,
-                falla: popup.document.getElementById("falla").value,
-                soluciones: popup.document.getElementById("soluciones").value.split(',').map(s => s.trim()).filter(s => s)
-            };
-        }
-
-        try {
-            const res = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body)
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.detail || "Error desconocido");
-            addMessage(`✅ ${data.message}`, "bot");
-            popup.close();
-            startChat();
-        } catch (error) {
-            popup.alert(`Error al guardar: ${error.message}`);
-        }
-    });
-}
-
-
-
+    /**
+     * Abre la ventana de agregar solución a una falla.
+     * La solución es terminal para el nodo actual (falla).
+     */
     function abrirVentanaAgregarSolucion() {
-        // ... (idéntico)
+        const popup = window.open("", "AgregarSolucion", "width=500,height=300,scrollbars=yes,resizable=yes");
+        if (!popup) { alert("Por favor, habilite las ventanas emergentes."); return; }
+        popup.document.write("<html><head><title>Agregar Solución</title></head><body>");
+        popup.document.write("<h2>Agregar Nueva Solución</h2>");
+        let formHTML = `<form id="addForm">`;
+        formHTML += "<h4>Contexto Actual:</h4>";
+        formHTML += `<p><strong>Máquina:</strong> ${cum_state.maquina}</p>`;
+        formHTML += `<p><strong>Síntomas:</strong> ${cum_state.sintomas.join(' -> ')}</p>`;
+        formHTML += `<p><strong>Falla actual:</strong> ${cum_state.falla_actual}</p>`;
+        formHTML += "<hr><h4>Datos a Agregar:</h4>";
+        formHTML += `<label for="solucion">Texto de la nueva solución:</label><br>`;
+        formHTML += `<input type="text" id="solucion" name="solucion" required style="width: 90%;"><br>`;
+        formHTML += `<br><button type="submit">Guardar Solución</button>`;
+        formHTML += `</form></body></html>`;
+        popup.document.write(formHTML);
+        popup.document.getElementById("addForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const body = { solucion_nueva: popup.document.getElementById("solucion").value };
+            const url = `${API_URL}/agregar/solucion/${ID_SESION}`;
+            try {
+                const res = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || "Error desconocido");
+                addMessage(`✅ ${data.message}`, "bot");
+                popup.close();
+            } catch (error) {
+                popup.alert(`Error al guardar: ${error.message}`);
+            }
+        });
     }
 
     // ---- INICIO Y EVENTOS ----
+
     resetBtn.addEventListener("click", startChat);
     manualBtn.addEventListener("click", () => {
         abrirVentanaAgregarSimple(sessionState);
