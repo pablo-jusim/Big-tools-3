@@ -1,13 +1,12 @@
 """
 engine.py
 Motor de inferencia del sistema experto de diagnóstico de máquinas.
-Adaptado a la ESTRUCTURA SIMPLIFICADA (sin "categorias")
+Adaptado a la ESTRUCTURA SIMPLIFICADA (sin "categorias").
 """
 
 from typing import Optional, List, Dict, Any
 from Backend.api.base_conocimiento import BaseConocimiento
 from Backend.api.nodo import Nodo
-
 
 class MotorInferencia:
     """
@@ -19,93 +18,67 @@ class MotorInferencia:
         self.base = base
         self.maquina_actual: Optional[str] = None
         self.nodo_actual: Optional[Nodo] = None
-        
-        # self.ruta almacena TODOS los nodos por los que se ha pasado
         self.ruta: List[Nodo] = []
-        
-        # Almacena el path (lista de atributos) al ÚLTIMO NODO DE PREGUNTA
+        # Path de atributos hasta la última pregunta
         self.path_pregunta_actual: List[str] = []
 
-    # -------------------------------------------------------------------------
-    # MÉTODOS PRINCIPALES (Llamados por routes.py)
-    # -------------------------------------------------------------------------
+    # ------------------- FLUJO PRINCIPAL ---------------------
 
     def iniciar_diagnostico(self, nombre_maquina: str) -> dict:
         """
-        Paso 1: Inicializa el diagnóstico para una máquina.
-        Carga el NODO RAÍZ y devuelve la primera pregunta.
+        Inicia el diagnóstico cargando el nodo raíz y devolviendo la primera pregunta.
         """
         self.maquina_actual = nombre_maquina
-        
+
         nodo_raiz = self.base.get_arbol_maquina(nombre_maquina) 
         if not nodo_raiz:
             raise ValueError(f"No se encontró la máquina '{nombre_maquina}'.")
 
         self.nodo_actual = nodo_raiz
-        self.ruta = [nodo_raiz] # El nodo raíz es el inicio de nuestra ruta
-        
-        # El nodo raíz es la primera pregunta, su path es vacío []
-        self.path_pregunta_actual = [] 
+        self.ruta = [nodo_raiz]
+        self.path_pregunta_actual = []  # El nodo raíz es la primera pregunta
 
         return self._pregunta_actual()
 
-
     def avanzar(self, respuesta_atributo: str) -> dict:
         """
-        Avanza un paso en el árbol según el 'nombre' (atributo)
-        seleccionado por el usuario.
+        Avanza un paso en el árbol según la opción seleccionada.
         """
         if not self.nodo_actual:
             return {"mensaje": "El diagnóstico no se ha iniciado. Use 'iniciar_diagnostico'."}
 
-        # 1. Encontrar el siguiente nodo basado en la respuesta
+        # Buscar el hijo según el atributo seleccionado
         siguiente_nodo = self.nodo_actual.find_rama_by_nombre(respuesta_atributo)
-
         if not siguiente_nodo:
             print(f"Error en motor: Respuesta '{respuesta_atributo}' no encontrada en nodo '{self.nodo_actual.nombre}'.")
-            return self._pregunta_actual() # Devolvemos la pregunta actual
+            return self._pregunta_actual()
 
-        # 2. Avanzar al siguiente nodo
         self.nodo_actual = siguiente_nodo
         self.ruta.append(siguiente_nodo)
 
-        # 3. --- LÓGICA DE AUTO-AVANCE (LA CORRECCIÓN) ---
-        # Si el nodo al que llegamos (ej: "El aparato no funciona...")
-        # NO tiene pregunta, pero SÍ tiene una única rama,
-        # significa que es un "contenedor" y debemos avanzar automáticamente.
-        while (not self.nodo_actual.pregunta and 
-               self.nodo_actual.ramas and 
-               len(self.nodo_actual.ramas) == 1):
-            
-            # Obtenemos el único hijo
+        # Avance automático sobre contenedores mudos (nodo sin pregunta y con una sola rama)
+        while (
+            not self.nodo_actual.pregunta
+            and self.nodo_actual.ramas 
+            and len(self.nodo_actual.ramas) == 1
+        ):
             hijo_unico = self.nodo_actual.ramas[0]
-
-            # Avanzamos al nodo hijo
-            self.nodo_actual = hijo_unico 
-            self.ruta.append(self.nodo_actual)
-
-            # Si este hijo es una FALLA (Tu bug), paramos y devolvemos el resultado.
+            self.nodo_actual = hijo_unico
+            self.ruta.append(hijo_unico)
             if self.nodo_actual.es_hoja():
-                # self.path_pregunta_actual se queda "atascado" en el padre (¡correcto!)
+                # No actualizamos path_pregunta_actual: queda atascado en el padre
                 return self._resultado_final(self.nodo_actual)
-            
-            # Si el hijo es otra pregunta, el bucle 'while' continuará
-            # (aunque en tu JSON actual, el hijo es o una falla o un nodo de pregunta final)
 
-        # 4. Comprobar si hemos llegado a una falla (si no era un contenedor)
+        # Si es hoja (tiene una falla), devolver resultado final
         if self.nodo_actual.es_hoja():
-            # self.path_pregunta_actual se queda "atascado" en el padre (¡correcto!)
+            # path_pregunta_actual no cambia (queda detenido en el nodo de pregunta padre)
             return self._resultado_final(self.nodo_actual)
 
-        # 5. Si no es una falla, es una pregunta. Actualizamos el path de la pregunta.
-        #    get_historial_path_completo() ahora devuelve el path a ESTE nodo de pregunta.
+        # Si es una pregunta, actualizar path hasta este punto
         self.path_pregunta_actual = self.get_historial_path_completo()
         return self._pregunta_actual()
 
-
-    # -------------------------------------------------------------------------
-    # MÉTODOS AUXILIARES Y DE ESTADO
-    # -------------------------------------------------------------------------
+    # ------------------- FUNCIONES AUXILIARES ----------------
 
     def _pregunta_actual(self) -> dict:
         """
@@ -113,23 +86,17 @@ class MotorInferencia:
         """
         if self.nodo_actual is None:
             return {"mensaje": "No hay un nodo activo en el diagnóstico."}
-
+        
         texto_pregunta = self.nodo_actual.pregunta
         if not texto_pregunta:
-             texto_pregunta = f"¿Qué observa en '{self.nodo_actual.nombre}'?"
+            texto_pregunta = f"¿Qué observa en '{self.nodo_actual.nombre}'?"
 
-        # Las opciones son el 'nombre' de cada nodo hijo.
-        # (Tu nodo.py convierte "atributo": "..." en nodo.nombre = "...")
         opciones = [r.nombre for r in self.nodo_actual.ramas if r.nombre]
-        
-        return {
-            "pregunta": texto_pregunta,
-            "opciones": opciones
-        }
+        return {"pregunta": texto_pregunta, "opciones": opciones}
 
     def _resultado_final(self, nodo_falla: Nodo) -> dict:
         """
-        Devuelve el resultado final del diagnóstico.
+        Devuelve el resultado final del diagnóstico (una hoja).
         """
         return {
             "falla": nodo_falla.falla,
@@ -139,22 +106,16 @@ class MotorInferencia:
 
     def get_historial_path_completo(self) -> List[str]:
         """
-        Devuelve el historial COMPLETO de atributos
-        hasta el nodo actual (incluyendo si es una falla).
-        Usado por 'agregar_solucion'.
+        Devuelve los atributos seleccionados hasta el nodo actual (sin incluir el raíz).
         """
         if not self.ruta or len(self.ruta) < 2:
-            return [] 
-        # Devuelve todos los nombres (atributos) MENOS el raíz
+            return []
         return [nodo.nombre for nodo in self.ruta[1:]]
 
     def get_path_a_pregunta(self) -> List[str]:
         """
-        Devuelve el historial de atributos hasta el
-        ÚLTIMO NODO DE PREGUNTA.
-        Usado por 'agregar_sintoma' y 'agregar_falla'.
+        Devuelve el path de atributos hasta el último nodo de pregunta alcanzado.
         """
-        # Esta variable la hemos estado manteniendo actualizada
         return self.path_pregunta_actual
 
     def reiniciar(self):
@@ -165,4 +126,3 @@ class MotorInferencia:
         self.maquina_actual = None
         self.ruta = []
         self.path_pregunta_actual = []
-
