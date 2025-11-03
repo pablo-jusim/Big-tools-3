@@ -3,7 +3,7 @@ import json
 import hashlib
 import secrets
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 
 USERS_FILE = Path(__file__).parent.parent / "data" / "users.json"
@@ -19,9 +19,7 @@ def cargar_usuarios():
         return []
 
 def hash_password(password: str) -> str:
-    """
-    Genera hash SHA256 de una contraseña.
-    """
+    """Genera hash SHA256 de una contraseña."""
     return hashlib.sha256(password.encode()).hexdigest()
 
 def validar_usuario(username: str, password: str) -> Optional[dict]:
@@ -31,12 +29,11 @@ def validar_usuario(username: str, password: str) -> Optional[dict]:
     """
     usuarios = cargar_usuarios()
     password_hash = hash_password(password)
-    
     for u in usuarios:
         if u["username"] == username and u["password"] == password_hash:
             return {
                 "username": u["username"],
-                "role": u.get("role", "tecnico")  # Por defecto es técnico
+                "role": u.get("role", "tecnico")
             }
     return None
 
@@ -56,13 +53,8 @@ def validar_token(token: str) -> Optional[dict]:
     """
     Valida un token y retorna los datos del usuario si es válido, None si no.
     """
-    if token in active_tokens:
-        return active_tokens[token]
-    return None
+    return active_tokens.get(token)
 
-def eliminar_token(token: str):
-    """
-    Elimina un token (logout).
-    """
-    if token in active_tokens:
-        del active_tokens[token]
+def eliminar_token():
+    """Elimina un token (logout)."""
+    active_tokens.clear()

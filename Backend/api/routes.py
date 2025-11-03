@@ -1,21 +1,20 @@
 """
 routes.py
-Define las rutas de la API del sistema experto.
-Adaptado a la estructura simplificada (sin "categorias").
+Versión fusionada: base sin categorías, login/token admin y stats.
 """
 
-from fastapi import APIRouter, HTTPException, Body, Depends
-from typing import Dict
+from fastapi import APIRouter, HTTPException, Body, Depends, Header
+from typing import Dict, Optional
 
-from Backend.api.auth import validar_usuario
-from Backend.api.base_conocimiento import BaseConocimiento
-from Backend.api.engine import MotorInferencia
-from Backend.api.nodo import Nodo
+from api.auth import validar_usuario, crear_token, validar_token, eliminar_token
+from api.base_conocimiento import BaseConocimiento
+from api.engine import MotorInferencia
 
-from Backend.api.schemas import (
+from api.stats import stats_manager  # Debes tener este módulo
+
+from api.schemas import (
     RespuestaBody,
     MaquinaData,
-    SintomaData,
     FallaData,
     SolucionData,
     RestructuraFallaData
@@ -26,7 +25,23 @@ router = APIRouter(prefix="/api", tags=["Sistema Experto"])
 base = BaseConocimiento()
 sesiones: Dict[str, MotorInferencia] = {}
 
-# ---------------- Rutas de diagnóstico ----------------
+# --------- Utilidades para protección admin ---------
+
+def get_token_from_header(authorization: Optional[str] = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token no proporcionado")
+    return authorization.replace("Bearer ", "")
+
+def validar_token_admin(authorization: Optional[str] = Header(None)):
+    token = get_token_from_header(authorization)
+    user_data = validar_token(token)
+    if not user_data:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+    if user_data.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Acceso denegado: Solo administradores")
+    return user_data
+
+# ---------------- Rutas de diagnóstico públicas ----------------
 
 @router.get("/")
 def home():
@@ -34,7 +49,8 @@ def home():
 
 @router.get("/maquinas")
 def listar_maquinas():
-    return {"maquinas": base.listar_maquinas()}
+    maquinas = base.listar_maquinas()
+    return {"maquinas": maquinas}
 
 @router.post("/diagnosticar/iniciar/{nombre_maquina}")
 def iniciar_diagnostico(nombre_maquina: str):
@@ -43,6 +59,8 @@ def iniciar_diagnostico(nombre_maquina: str):
         resultado = motor.iniciar_diagnostico(nombre_maquina)
         key = "default_user"
         sesiones[key] = motor
+        # Registrar inicio en estadísticas
+        stats_manager.registrar_diagnostico_iniciado(nombre_maquina)
         return resultado
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -53,24 +71,29 @@ def iniciar_diagnostico(nombre_maquina: str):
 def avanzar_diagnostico(id_sesion: str, body: RespuestaBody):
     motor = sesiones.get(id_sesion)
     if motor is None:
-        raise HTTPException(status_code=404, detail="No se encontró una sesión activa. Por favor, reinicie el chat.")
+        raise HTTPException(status_code=404, detail="No se encontró una sesión activa. Reinicie el chat.")
     try:
         resultado = motor.avanzar(body.respuesta)
+        # Si llega a una falla (resultado final), registra como diagnóstico completado
+        if isinstance(resultado, dict) and "falla" in resultado:
+            stats_manager.registrar_diagnostico_completado(motor.maquina_actual, resultado["falla"])
         return resultado
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ---------------- Rutas de edición ----------------
+# ---------------- Rutas de edición (protegidas admin) ----------------
 
-@router.post("/agregar/maquina", summary="Agrega una nueva máquina")
-def agregar_maquina(data: MaquinaData):
+@router.post("/agregar/maquina")
+def agregar_maquina(
+    data: MaquinaData,
+    user_data: dict = Depends(validar_token_admin)
+):
     try:
         base.agregar_maquina(data.nombre)
-        # Agrega rama terminal inicial bajo la pregunta principal
         if data.primer_rama:
             base.agregar_rama(
                 data.nombre, 
-                [],  # primer nivel de la máquina
+                [],  
                 data.primer_rama
             )
         return {"success": True, "message": f"Máquina '{data.nombre}' agregada."}
@@ -85,8 +108,12 @@ def get_motor_de_sesion(id_sesion: str) -> MotorInferencia:
         raise HTTPException(status_code=404, detail="Sesión de diagnóstico no encontrada. No se puede agregar el nodo.")
     return motor
 
-@router.post("/agregar/sintoma/{id_sesion}", summary="Agrega un nuevo síntoma HOJA")
-def agregar_sintoma(data: FallaData, motor: MotorInferencia = Depends(get_motor_de_sesion)):
+@router.post("/agregar/sintoma/{id_sesion}")
+def agregar_sintoma(
+    data: FallaData, 
+    motor: MotorInferencia = Depends(get_motor_de_sesion),
+    user_data: dict = Depends(validar_token_admin)
+):
     try:
         path_padre = motor.get_path_a_pregunta()
         nueva_rama_dict = data.model_dump()
@@ -96,14 +123,18 @@ def agregar_sintoma(data: FallaData, motor: MotorInferencia = Depends(get_motor_
         if "falla" in str(e):
             raise HTTPException(
                 status_code=409,
-                detail="CONFLICT: El nodo actual es una falla. Debe usar la opción 'restructurar' para agregar una nueva pregunta."
+                detail="CONFLICT: El nodo actual es una falla. Debe usar 'restructurar' para agregar una pregunta nueva."
             )
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/agregar/falla/{id_sesion}", summary="Agrega una nueva falla (hoja)")
-def agregar_falla(data: FallaData, motor: MotorInferencia = Depends(get_motor_de_sesion)):
+@router.post("/agregar/falla/{id_sesion}")
+def agregar_falla(
+    data: FallaData, 
+    motor: MotorInferencia = Depends(get_motor_de_sesion),
+    user_data: dict = Depends(validar_token_admin)
+):
     try:
         path_padre = motor.get_path_a_pregunta()
         nueva_rama_dict = data.model_dump()
@@ -111,13 +142,13 @@ def agregar_falla(data: FallaData, motor: MotorInferencia = Depends(get_motor_de
         if nodo_padre.es_hoja():
             raise HTTPException(
                 status_code=409,
-                detail=f"CONFLICT: El síntoma al que intenta agregar una falla ('{nodo_padre.nombre}') ya es una falla: '{nodo_padre.falla}'. Use el formulario de reestructuración."
+                detail=f"CONFLICT: El síntoma ya es una falla."
             )
         if (nodo_padre.ramas and len(nodo_padre.ramas) == 1 and nodo_padre.ramas[0].es_hoja()):
             falla_existente = nodo_padre.ramas[0]
             raise HTTPException(
                 status_code=409,
-                detail=f"CONFLICT: El síntoma al que intenta agregar una falla ya conduce a la falla: '{falla_existente.falla}'. Use el formulario de reestructuración.",
+                detail=f"CONFLICT: El síntoma conduce a la falla: '{falla_existente.falla}'. Use el formulario de reestructuración.",
             )
         base.agregar_rama(motor.maquina_actual, path_padre, nueva_rama_dict)
         return {"success": True, "message": f"Falla '{data.falla}' agregada."}
@@ -126,8 +157,12 @@ def agregar_falla(data: FallaData, motor: MotorInferencia = Depends(get_motor_de
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/restructurar/falla/{id_sesion}", summary="Restructura una falla en una pregunta")
-def restructurar_falla(data: RestructuraFallaData, motor: MotorInferencia = Depends(get_motor_de_sesion)):
+@router.post("/restructurar/falla/{id_sesion}")
+def restructurar_falla(
+    data: RestructuraFallaData, 
+    motor: MotorInferencia = Depends(get_motor_de_sesion),
+    user_data: dict = Depends(validar_token_admin)
+):
     try:
         path_a_restructurar = motor.get_historial_path_completo()
         # Preparar ambos dicts de falla, viejo y nuevo
@@ -156,12 +191,16 @@ def restructurar_falla(data: RestructuraFallaData, motor: MotorInferencia = Depe
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/agregar/solucion/{id_sesion}", summary="Agrega una solución a una falla existente")
-def agregar_solucion(data: SolucionData, motor: MotorInferencia = Depends(get_motor_de_sesion)):
+@router.post("/agregar/solucion/{id_sesion}")
+def agregar_solucion(
+    data: SolucionData, 
+    motor: MotorInferencia = Depends(get_motor_de_sesion),
+    user_data: dict = Depends(validar_token_admin)
+):
     try:
         path_a_falla = motor.get_historial_path_completo()
         if not motor.nodo_actual or not motor.nodo_actual.es_hoja():
-            raise ValueError("No se puede agregar una solución a un nodo que no es una falla (el nodo actual es una pregunta).")
+            raise ValueError("No se puede agregar una solución a un nodo que no es una falla.")
         base.agregar_solucion(motor.maquina_actual, path_a_falla, data.solucion_nueva)
         return {"success": True, "message": f"Solución agregada a la falla '{motor.nodo_actual.falla}'."}
     except ValueError as e:
@@ -169,9 +208,34 @@ def agregar_solucion(data: SolucionData, motor: MotorInferencia = Depends(get_mo
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ---------------- Rutas de login ----------------
+
+# ---------------- Rutas de login/logout y stats (protegidas) ----------------
+
 @router.post("/login_admin")
 def login_admin(username: str = Body(...), password: str = Body(...)):
-    if validar_usuario(username, password):
-        return {"success": True, "message": "Login correcto"}
+    usuario = validar_usuario(username, password)
+    if usuario and usuario.get("role") == "admin":
+        token = crear_token(usuario["username"], usuario["role"])
+        return {
+            "success": True,
+            "token": token,
+            "username": usuario["username"],
+            "role": usuario["role"]
+        }
     raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
+
+@router.post("/logout_admin")
+def logout_admin(authorization: Optional[str] = Header(None)):
+    token = get_token_from_header(authorization)
+    eliminar_token(token)
+    return {"success": True, "message": "Sesión cerrada correctamente"}
+
+@router.get("/admin/stats")
+def obtener_estadisticas(user_data: dict = Depends(validar_token_admin)):
+    """Retorna las estadísticas del sistema (requiere autenticación admin)."""
+    return stats_manager.obtener_estadisticas()
+
+@router.post("/admin/reset_tokens")
+def reset_tokens():
+    eliminar_token()
+    return {"success": True, "message": "Todos los tokens han sido invalidados."}

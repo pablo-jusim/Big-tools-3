@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<!-- admin.html -->
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big Tools - Panel de Administración</title>
+
+    <!-- Favicon y estilos -->
+    <link rel="icon" href="/static/assets/img/logo_bigtools.png" type="image/png">
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+
+<body>
+    <!-- Dashboard -->
+    <div id="dashboard" class="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <img src="/static/assets/img/logo_bigtools.png" alt="Big Tools" class="logo">
+                <h1>Panel de Administración</h1>
+            </div>
+            <div class="header-right">
+                <span id="username-display" class="username-display"></span>
+                <button id="logout-button" class="logout-btn">Cerrar Sesión</button>
+                <button id="back-button" class="back-btn" onclick="window.location.href='/'">
+                    Volver al Chatbot
+                </button>
+            </div>
+        </header>
+
+        <!-- Contenido del Dashboard -->
+        <main class="dashboard-content">
+            <!-- Pestañas de navegación -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="estadisticas">Estadísticas</button>
+                <button class="tab-btn" data-tab="manuales">Gestión de Manuales</button>
+            </div>
+
+            <!-- Sección de Estadísticas -->
+            <div id="tab-estadisticas" class="tab-content active">
+                <h2>Estadísticas del Sistema Experto</h2>
+
+            <!-- Grid de estadísticas -->
+            <div class="stats-grid">
+                <!-- Total de diagnósticos -->
+                <div class="stat-card">
+                    <div class="stat-icon"></div>
+                    <div class="stat-info">
+                        <h3>Total de Diagnósticos</h3>
+                        <p id="total-diagnosticos" class="stat-number">0</p>
+                    </div>
+                </div>
+
+                <!-- Máquinas más consultadas -->
+                <div class="stat-card full-width">
+                    <div class="stat-header">
+                        <div class="stat-icon"></div>
+                        <h3>Máquinas Más Consultadas (Top 3)</h3>
+                    </div>
+                    <div id="top-maquinas" class="stat-list">
+                        <p class="loading">Cargando...</p>
+                    </div>
+                </div>
+
+                <!-- Categorías más consultadas -->
+                <div class="stat-card full-width">
+                    <div class="stat-header">
+                        <div class="stat-icon"></div>
+                        <h3>Categorías Más Consultadas (Top 5)</h3>
+                    </div>
+                    <div id="top-categorias" class="stat-list">
+                        <p class="loading">Cargando...</p>
+                    </div>
+                </div>
+
+                <!-- Historial reciente -->
+                <div class="stat-card full-width">
+                    <div class="stat-header">
+                        <div class="stat-icon"></div>
+                        <h3>Historial Reciente (Últimas 10 consultas)</h3>
+                    </div>
+                    <div id="historial-reciente" class="historial-table">
+                        <p class="loading">Cargando...</p>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Máquinas -->
+                <div class="stat-card full-width">
+                    <div class="stat-header">
+                        <div class="stat-icon"></div>
+                        <h3>Diagnosticos por Maquina</h3>
+                    </div>
+                    <canvas id="chartMaquinas"></canvas>
+                </div>
+
+                <!-- Gráfico de Categorías -->
+                <div class="stat-card full-width">
+                    <div class="stat-header">
+                        <div class="stat-icon"></div>
+                        <h3>Diagnosticos por Categoria</h3>
+                    </div>
+                    <canvas id="chartCategorias"></canvas>
+                </div>
+
+                <!-- Gráfico de Tendencia -->
+                <div class="stat-card full-width">
+                    <div class="stat-header">
+                        <div class="stat-icon"></div>
+                        <h3>Tendencia de Diagnosticos (Ultimos 10)</h3>
+                    </div>
+                    <canvas id="chartTendencia"></canvas>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="refresh-container">
+                <button id="refresh-button" class="refresh-btn">Actualizar Estadísticas</button>
+                <button id="export-pdf-button" class="export-pdf-btn">Exportar Estadisticas a PDF</button>
+            </div>
+            </div>
+
+            <!-- Sección de Gestión de Manuales -->
+            <div id="tab-manuales" class="tab-content">
+                <h2>Gestión de Manuales PDF</h2>
+
+                <!-- Formulario para subir manual -->
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon"></div>
+                        <h3>Subir Nuevo Manual</h3>
+                    </div>
+                    <form id="upload-manual-form" class="upload-form">
+                        <div class="form-group">
+                            <label for="manual-nombre">Nombre del Manual:</label>
+                            <input type="text" id="manual-nombre" placeholder="Ej: Compresor Atlas Copco XAS 185" required>
+                            <small>Escribe el nombre descriptivo de la máquina o equipo</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manual-file">Archivo PDF:</label>
+                            <input type="file" id="manual-file" accept=".pdf" required>
+                            <small>Solo archivos PDF. Tamaño máximo: 50MB</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manual-descripcion">Descripción (opcional):</label>
+                            <input type="text" id="manual-descripcion" placeholder="Ej: Manual de usuario versión 2024">
+                        </div>
+
+                        <button type="submit" class="upload-btn">Subir Manual</button>
+                    </form>
+                    <div id="upload-status" class="upload-status"></div>
+                </div>
+
+                <!-- Lista de manuales existentes -->
+                <div class="stat-card full-width">
+                    <div class="stat-header">
+                        <div class="stat-icon"></div>
+                        <h3>Manuales Disponibles</h3>
+                    </div>
+                    <div id="manuales-lista" class="manuales-lista">
+                        <p class="loading">Cargando manuales...</p>
+                    </div>
+                </div>
+
+                <!-- Instrucciones -->
+                <div class="stat-card info-card">
+                    <div class="stat-header">
+                        <div class="stat-icon"></div>
+                        <h3>Instrucciones</h3>
+                    </div>
+                    <div class="info-content">
+                        <p><strong>Ubicación de los manuales:</strong></p>
+                        <code>Backend/data/manuales_pdf/</code>
+                        
+                        <p><strong>Cómo agregar un manual manualmente:</strong></p>
+                        <ol>
+                            <li>Copia el archivo PDF a la carpeta <code>Backend/data/manuales_pdf/</code></li>
+                            <li>El nombre del archivo debe ser descriptivo (ej: <code>MANUAL_CUMMINS_2024.pdf</code>)</li>
+                            <li>Actualiza la base de conocimiento si es necesario</li>
+                            <li>El manual estará disponible automáticamente en los diagnósticos</li>
+                        </ol>
+
+                        <p><strong>Nota:</strong> Los manuales subidos a través de este formulario se guardarán automáticamente en la carpeta correcta.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Librería Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Librería jsPDF para exportar a PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="/static/js/admin.js"></script>
+</body>
+
+</html>
+

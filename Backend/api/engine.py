@@ -5,8 +5,8 @@ Adaptado a la ESTRUCTURA SIMPLIFICADA (sin "categorias").
 """
 
 from typing import Optional, List, Dict, Any
-from Backend.api.base_conocimiento import BaseConocimiento
-from Backend.api.nodo import Nodo
+from api.base_conocimiento import BaseConocimiento
+from api.nodo import Nodo
 
 class MotorInferencia:
     """

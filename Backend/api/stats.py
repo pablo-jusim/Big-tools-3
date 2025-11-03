@@ -1,128 +1,59 @@
 """
 stats.py
-Módulo para rastrear y gestionar estadísticas del sistema experto.
+Gestor simple de estadísticas del sistema experto: solo máquinas y fallas (sin categorías).
 """
 
-import json
-from pathlib import Path
+from collections import defaultdict, deque
 from datetime import datetime
-from typing import Dict, List, Optional
 
-STATS_FILE = Path(__file__).parent.parent / "data" / "stats.json"
+MAX_HISTORIAL = 20  # Cuántas consultas recientes guardar
 
 class StatsManager:
-    """
-    Gestiona las estadísticas del sistema de diagnóstico.
-    """
-    
     def __init__(self):
-        self.stats = self._cargar_stats()
+        self.total_diagnosticos = 0
+        self.top_maquinas = defaultdict(int)     # maquina -> cantidad
+        self.top_fallas = defaultdict(int)       # (maquina, falla) -> cantidad
+        self.historial_reciente = deque(maxlen=MAX_HISTORIAL)
     
-    def _cargar_stats(self) -> dict:
-        """Carga las estadísticas desde el archivo JSON."""
-        if not STATS_FILE.exists():
-            return {
-                "total_diagnosticos": 0,
-                "diagnosticos_por_maquina": {},
-                "diagnosticos_por_categoria": {},
-                "historial": []
-            }
-        
-        try:
-            with open(STATS_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return {
-                "total_diagnosticos": 0,
-                "diagnosticos_por_maquina": {},
-                "diagnosticos_por_categoria": {},
-                "historial": []
-            }
+    def registrar_diagnostico_iniciado(self, maquina):
+        self.total_diagnosticos += 1
+        self.top_maquinas[maquina] += 1
+        # El historial se completa al finalizar (diagnóstico completado)
     
-    def _guardar_stats(self):
-        """Guarda las estadísticas en el archivo JSON."""
-        try:
-            with open(STATS_FILE, "w", encoding="utf-8") as f:
-                json.dump(self.stats, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            print(f"Error al guardar estadísticas: {e}")
-    
-    def registrar_diagnostico_iniciado(self, maquina: str, categoria: str):
-        """
-        Registra el inicio de un diagnóstico.
-        """
-        self.stats["total_diagnosticos"] += 1
-        
-        # Contador por máquina
-        if maquina not in self.stats["diagnosticos_por_maquina"]:
-            self.stats["diagnosticos_por_maquina"][maquina] = 0
-        self.stats["diagnosticos_por_maquina"][maquina] += 1
-        
-        # Contador por categoría
-        categoria_key = f"{maquina}|{categoria}"
-        if categoria_key not in self.stats["diagnosticos_por_categoria"]:
-            self.stats["diagnosticos_por_categoria"][categoria_key] = 0
-        self.stats["diagnosticos_por_categoria"][categoria_key] += 1
-        
-        # Agregar al historial
-        self.stats["historial"].append({
-            "timestamp": datetime.now().isoformat(),
-            "maquina": maquina,
-            "categoria": categoria,
-            "completado": False
+    def registrar_diagnostico_completado(self, maquina, falla):
+        llave = (maquina, falla)
+        self.top_fallas[llave] += 1
+        now = datetime.now().isoformat()
+        self.historial_reciente.appendleft({
+            'timestamp': now,
+            'maquina': maquina,
+            'falla': falla,
+            'completado': True,
         })
-        
-        # Mantener solo los últimos 50 registros
-        if len(self.stats["historial"]) > 50:
-            self.stats["historial"] = self.stats["historial"][-50:]
-        
-        self._guardar_stats()
     
-    def registrar_diagnostico_completado(self, maquina: str, categoria: str, falla: str):
-        """
-        Marca un diagnóstico como completado.
-        """
-        # Buscar el último diagnóstico no completado para esta máquina/categoría
-        for entry in reversed(self.stats["historial"]):
-            if (entry["maquina"] == maquina and 
-                entry["categoria"] == categoria and 
-                not entry.get("completado", False)):
-                entry["completado"] = True
-                entry["falla"] = falla
-                break
-        
-        self._guardar_stats()
-    
-    def obtener_estadisticas(self) -> dict:
-        """
-        Retorna un resumen de las estadísticas.
-        """
-        # Top 3 máquinas más consultadas
-        maquinas_ordenadas = sorted(
-            self.stats["diagnosticos_por_maquina"].items(),
-            key=lambda x: x[1],
-            reverse=True
-        )[:3]
-        
-        # Top 5 categorías más consultadas
-        categorias_ordenadas = sorted(
-            self.stats["diagnosticos_por_categoria"].items(),
-            key=lambda x: x[1],
+    def obtener_estadisticas(self):
+        # Top máquinas (orden descendente)
+        maquinas = sorted(
+            [{'maquina': k, 'cantidad': v} for k, v in self.top_maquinas.items()],
+            key=lambda x: x['cantidad'],
             reverse=True
         )[:5]
-        
-        # Últimos 10 diagnósticos
-        historial_reciente = self.stats["historial"][-10:]
-        historial_reciente.reverse()
+
+        # Top fallas (orden descendente por cantidad)
+        fallas = sorted(
+            [{'maquina': k[0], 'falla': k[1], 'cantidad': v} for k, v in self.top_fallas.items()],
+            key=lambda x: x['cantidad'],
+            reverse=True
+        )[:5]
+
+        historial = list(self.historial_reciente)
         
         return {
-            "total_diagnosticos": self.stats["total_diagnosticos"],
-            "top_maquinas": [{"maquina": m, "cantidad": c} for m, c in maquinas_ordenadas],
-            "top_categorias": [{"categoria": c.split("|")[1], "maquina": c.split("|")[0], "cantidad": cant} 
-                              for c, cant in categorias_ordenadas],
-            "historial_reciente": historial_reciente
+            'total_diagnosticos': self.total_diagnosticos,
+            'top_maquinas': maquinas,
+            'top_fallas': fallas,
+            'historial_reciente': historial
         }
 
-# Instancia global para uso en las rutas
+# Singleton global listo para importar
 stats_manager = StatsManager()
-

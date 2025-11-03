@@ -1,58 +1,57 @@
 <!DOCTYPE html>
+<!-- index.html -->
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Big Tools - Chatbot</title>
     <!-- Favicon y estilos -->
-    <link rel="icon" href="/assets/img/logo_bigtools.png" type="image/png">
-    <link rel="stylesheet" href="css/style.css">
-    <style>
-        #login-modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0; top: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.4); justify-content: center; align-items: center;
-        }
-        #login-modal .modal-content {
-            background: white; padding: 24px; border-radius: 8px; box-shadow: 0 0 8px #888;
-            min-width: 280px; max-width: 95vw;
-        }
-        #login-modal input { width: 98%; margin-bottom: 6px; }
-        #user-box { font-size: 1em; color: #0a0; margin-right: 8px;}
-    </style>
+    <link rel="icon" href="/static/assets/img/logo_bigtools.png" type="image/png">
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
+
 <body>
-    <div class="container">
+
+    <!-- Modal de Login -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <h2>Iniciar Sesión</h2>
+            <p>Por favor, ingresa tus credenciales para acceder al sistema</p>
+            <form id="login-form">
+                <input type="text" id="username" placeholder="Usuario" required autocomplete="username">
+                <input type="password" id="password" placeholder="Contraseña" required autocomplete="current-password">
+                <button type="submit">Ingresar</button>
+            </form>
+            <p id="login-error" class="error-msg"></p>
+        </div>
+    </div>
+
+    <div class="container" id="main-container">
         <header class="header">
             <div class="header-left">
                 <img src="/assets/img/logo_bigtools.png" alt="Big Tools" class="logo">
                 <h1>Asistente Big Tools</h1>
             </div>
             <div class="header-right">
+                <span id="user-display"></span>
                 <button id="reset-button" class="admin-btn">Reiniciar Chat</button>
-                <!-- Botones de administración/manual agregados; visibles sólo si logueado, por JS -->
-                <button id="manual-add-button" class="admin-btn" style="display:none">Agregar máquina</button>
-                <button id="manual-add-falla" class="admin-btn" style="display:none">Agregar falla</button>
-                <button id="manual-add-solucion" class="admin-btn" style="display:none">Agregar solución</button>
+                <!-- Botones de administración: sólo visibles por JS -->
+                <button id="manual-add-button" class="admin-btn" style="display:none;">Agregar máquina manualmente</button>
+                <button id="manual-add-falla" class="admin-btn" style="display:none;">Agregar falla manualmente</button>
+                <button id="manual-add-solucion" class="admin-btn" style="display:none;">Agregar solución manualmente</button>
+                <button id="admin-button" class="admin-btn" style="display:none;" onclick="window.location.href='/admin'">Panel Admin</button>
+                <button id="logout-button" class="admin-btn" style="display:none;">Cerrar Sesión</button>
             </div>
         </header>
-        <!-- Chat principal -->
         <main class="chat-container">
             <div id="chat-window" class="chat-window">
                 <!-- Mensajes y botones aparecen dinámicamente -->
             </div>
-            <div id="manual-buttons" style="text-align:right; margin-top:10px;">
-                <!-- Botón único para Máquina, Categoría, Síntoma -->
-                <button id="manual-add-button" class="admin-btn" style="display:inline-block;"></button>
-                <!-- Doble botón para Falla y Solución -->
-                <button id="manual-add-falla" class="admin-btn" style="display:none;">Agregar falla manualmente</button>
-                <button id="manual-add-solucion" class="admin-btn" style="display:none;">Agregar solución manualmente</button>
-            </div>
         </main>
     </div>
-    <script src="js/main.js"></script>
+
+    <!-- Librería jsPDF para exportar a PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="/static/js/main.js"></script>
 </body>
 </html>
-
