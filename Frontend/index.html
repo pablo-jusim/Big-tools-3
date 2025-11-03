@@ -7,10 +7,24 @@
     <!-- Favicon y estilos -->
     <link rel="icon" href="/assets/img/logo_bigtools.png" type="image/png">
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        #login-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.4); justify-content: center; align-items: center;
+        }
+        #login-modal .modal-content {
+            background: white; padding: 24px; border-radius: 8px; box-shadow: 0 0 8px #888;
+            min-width: 280px; max-width: 95vw;
+        }
+        #login-modal input { width: 98%; margin-bottom: 6px; }
+        #user-box { font-size: 1em; color: #0a0; margin-right: 8px;}
+    </style>
 </head>
 <body>
     <div class="container">
-        <!-- Encabezado -->
         <header class="header">
             <div class="header-left">
                 <img src="/assets/img/logo_bigtools.png" alt="Big Tools" class="logo">
@@ -18,7 +32,10 @@
             </div>
             <div class="header-right">
                 <button id="reset-button" class="admin-btn">Reiniciar Chat</button>
-                <button id="admin-button" class="admin-btn">Modo Administración</button>
+                <!-- Botones de administración/manual agregados; visibles sólo si logueado, por JS -->
+                <button id="manual-add-button" class="admin-btn" style="display:none">Agregar máquina</button>
+                <button id="manual-add-falla" class="admin-btn" style="display:none">Agregar falla</button>
+                <button id="manual-add-solucion" class="admin-btn" style="display:none">Agregar solución</button>
             </div>
         </header>
         <!-- Chat principal -->
@@ -38,3 +55,4 @@
     <script src="js/main.js"></script>
 </body>
 </html>
+

@@ -482,5 +482,615 @@
         ]
       }
     ]
+  },
+  "motor_cummins": {
+    "pregunta": "¿Cuál es el síntoma principal del motor?",
+    "ramas": [
+      {
+        "atributo": "Problemas de arranque",
+        "pregunta": "¿Cuál es el síntoma?",
+        "ramas": [
+          {
+            "atributo": "El motor no arranca",
+            "pregunta": "¿Cuál podría ser la causa?",
+            "ramas": [
+              {
+                "atributo": "Batería descargada",
+                "falla": "Batería descargada o con bajo voltaje",
+                "referencia": "Manual Cummins Sec. 3",
+                "soluciones": [
+                  "Verificar el voltaje de la batería (mínimo 12.4V).",
+                  "Cargar o reemplazar la batería.",
+                  "Verificar conexiones y bornes de batería."
+                ]
+              },
+              {
+                "atributo": "Sin combustible o sistema con aire",
+                "falla": "Falta de combustible o aire en el sistema",
+                "referencia": "Manual Cummins Sec. 4",
+                "soluciones": [
+                  "Verificar nivel de combustible en el tanque.",
+                  "Purgar el sistema de combustible para eliminar aire.",
+                  "Revisar filtros de combustible."
+                ]
+              },
+              {
+                "atributo": "Motor de arranque defectuoso",
+                "falla": "Motor de arranque no funciona",
+                "referencia": "Manual Cummins Sec. 3",
+                "soluciones": [
+                  "Verificar conexiones eléctricas del motor de arranque.",
+                  "Probar el solenoide de arranque.",
+                  "Reemplazar el motor de arranque si es necesario."
+                ]
+              }
+            ]
+          },
+          {
+            "atributo": "El motor arranca pero se apaga inmediatamente",
+            "pregunta": "¿Qué observa?",
+            "ramas": [
+              {
+                "atributo": "Humo blanco al arrancar",
+                "falla": "Aire en el sistema de combustible",
+                "referencia": "Manual Cummins Sec. 4",
+                "soluciones": [
+                  "Purgar completamente el sistema de combustible.",
+                  "Verificar si hay fugas de aire en líneas de combustible.",
+                  "Revisar bomba de transferencia de combustible."
+                ]
+              },
+              {
+                "atributo": "Sin humo, solo se apaga",
+                "falla": "Presión baja de aceite o sensor defectuoso",
+                "referencia": "Manual Cummins Sec. 5",
+                "soluciones": [
+                  "Verificar nivel de aceite del motor.",
+                  "Revisar sensor de presión de aceite.",
+                  "Verificar bomba de aceite."
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "atributo": "Problemas de sobrecalentamiento",
+        "pregunta": "¿Cuándo ocurre el sobrecalentamiento?",
+        "ramas": [
+          {
+            "atributo": "Sobrecalentamiento constante",
+            "pregunta": "¿Cuál es la causa probable?",
+            "ramas": [
+              {
+                "atributo": "Nivel bajo de refrigerante",
+                "falla": "Nivel insuficiente de refrigerante",
+                "referencia": "Manual Cummins Sec. 6",
+                "soluciones": [
+                  "Verificar nivel de refrigerante en el radiador.",
+                  "Rellenar con refrigerante especificado.",
+                  "Buscar fugas en el sistema de enfriamiento."
+                ]
+              },
+              {
+                "atributo": "Radiador sucio u obstruido",
+                "falla": "Radiador obstruido",
+                "referencia": "Manual Cummins Sec. 6",
+                "soluciones": [
+                  "Limpiar el radiador externamente.",
+                  "Verificar flujo de aire.",
+                  "Limpiar o reemplazar el radiador si está muy obstruido."
+                ]
+              },
+              {
+                "atributo": "Termostato defectuoso",
+                "falla": "Termostato no abre correctamente",
+                "referencia": "Manual Cummins Sec. 6",
+                "soluciones": [
+                  "Probar el termostato en agua caliente.",
+                  "Reemplazar el termostato si no funciona correctamente."
+                ]
+              }
+            ]
+          },
+          {
+            "atributo": "Sobrecalentamiento bajo carga",
+            "pregunta": "¿Qué más observa?",
+            "ramas": [
+              {
+                "atributo": "Bomba de agua con ruido",
+                "falla": "Bomba de agua defectuosa",
+                "referencia": "Manual Cummins Sec. 6",
+                "soluciones": [
+                  "Inspeccionar la bomba de agua por fugas.",
+                  "Verificar rodamiento de la bomba.",
+                  "Reemplazar bomba de agua si es necesario."
+                ]
+              },
+              {
+                "atributo": "Ventilador no funciona correctamente",
+                "falla": "Ventilador o embrague de ventilador defectuoso",
+                "referencia": "Manual Cummins Sec. 6",
+                "soluciones": [
+                  "Verificar operación del ventilador.",
+                  "Revisar embrague del ventilador (si aplica).",
+                  "Reemplazar componentes defectuosos."
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "atributo": "Pérdida de potencia",
+        "pregunta": "¿Cuándo pierde potencia?",
+        "ramas": [
+          {
+            "atributo": "Pérdida gradual de potencia",
+            "pregunta": "¿Qué observa?",
+            "ramas": [
+              {
+                "atributo": "Humo negro excesivo",
+                "falla": "Filtro de aire sucio o sistema de inyección con problemas",
+                "referencia": "Manual Cummins Sec. 7",
+                "soluciones": [
+                  "Reemplazar filtro de aire.",
+                  "Verificar sistema de inyección.",
+                  "Revisar turbocompresor."
+                ]
+              },
+              {
+                "atributo": "Sin humo anormal",
+                "falla": "Filtro de combustible obstruido",
+                "referencia": "Manual Cummins Sec. 4",
+                "soluciones": [
+                  "Reemplazar filtros de combustible.",
+                  "Verificar presión de combustible.",
+                  "Limpiar tanque de combustible."
+                ]
+              }
+            ]
+          },
+          {
+            "atributo": "Pérdida súbita de potencia",
+            "pregunta": "¿Escucha algún ruido anormal?",
+            "ramas": [
+              {
+                "atributo": "Silbido o escape de aire",
+                "falla": "Fuga en el sistema de admisión o turbocompresor",
+                "referencia": "Manual Cummins Sec. 7",
+                "soluciones": [
+                  "Inspeccionar mangueras y conexiones de admisión.",
+                  "Verificar turbocompresor por fugas de aceite o daños.",
+                  "Reemplazar componentes dañados."
+                ]
+              },
+              {
+                "atributo": "Sin ruidos anormales",
+                "falla": "Problema en sistema de control electrónico",
+                "referencia": "Manual Cummins Sec. 8",
+                "soluciones": [
+                  "Verificar códigos de falla con herramienta de diagnóstico.",
+                  "Revisar sensores del motor.",
+                  "Consultar con técnico especializado Cummins."
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "atributo": "Humo excesivo",
+        "pregunta": "¿De qué color es el humo?",
+        "ramas": [
+          {
+            "atributo": "Humo negro",
+            "falla": "Combustión incompleta o exceso de combustible",
+            "referencia": "Manual Cummins Sec. 7",
+            "soluciones": [
+              "Reemplazar filtro de aire sucio.",
+              "Verificar inyectores de combustible.",
+              "Ajustar o reparar bomba de inyección.",
+              "Revisar turbocompresor."
+            ]
+          },
+          {
+            "atributo": "Humo azul",
+            "falla": "Consumo de aceite",
+            "referencia": "Manual Cummins Sec. 5",
+            "soluciones": [
+              "Verificar nivel de aceite del motor.",
+              "Inspeccionar anillos de pistón y cilindros.",
+              "Revisar sellos de válvulas.",
+              "Verificar turbocompresor por fuga de aceite."
+            ]
+          },
+          {
+            "atributo": "Humo blanco",
+            "falla": "Combustible sin quemar o agua en combustión",
+            "referencia": "Manual Cummins Sec. 4-6",
+            "soluciones": [
+              "Verificar temperatura de operación del motor.",
+              "Revisar inyectores de combustible.",
+              "Buscar agua en el combustible.",
+              "Verificar empaque de culata por fugas de refrigerante."
+            ]
+          }
+        ]
+      },
+      {
+        "atributo": "Presión de aceite anormal",
+        "pregunta": "¿La presión es alta o baja?",
+        "ramas": [
+          {
+            "atributo": "Presión baja de aceite",
+            "pregunta": "¿Cuándo ocurre?",
+            "ramas": [
+              {
+                "atributo": "Presión baja en ralentí",
+                "falla": "Nivel bajo de aceite o aceite incorrecto",
+                "referencia": "Manual Cummins Sec. 5",
+                "soluciones": [
+                  "Verificar y ajustar nivel de aceite.",
+                  "Usar aceite de viscosidad correcta.",
+                  "Verificar sensor de presión de aceite."
+                ]
+              },
+              {
+                "atributo": "Presión baja a todas las RPM",
+                "falla": "Bomba de aceite defectuosa o cojinetes desgastados",
+                "referencia": "Manual Cummins Sec. 5",
+                "soluciones": [
+                  "Verificar operación de la bomba de aceite.",
+                  "Inspeccionar filtro de aceite por obstrucción.",
+                  "Revisar cojinetes del motor.",
+                  "Realizar análisis de aceite."
+                ]
+              }
+            ]
+          },
+          {
+            "atributo": "Presión alta de aceite",
+            "falla": "Válvula de alivio de presión pegada o aceite muy viscoso",
+            "referencia": "Manual Cummins Sec. 5",
+            "soluciones": [
+              "Verificar válvula de alivio de presión.",
+              "Usar aceite de viscosidad correcta.",
+              "Verificar sensor de presión de aceite."
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "soldadora_miller_ranger": {
+    "pregunta": "¿Cuál es el síntoma principal de la soldadora?",
+    "ramas": [
+      {
+        "atributo": "Problemas de arranque del motor",
+        "pregunta": "¿Qué ocurre al intentar arrancar?",
+        "ramas": [
+          {
+            "atributo": "El motor no gira",
+            "pregunta": "¿Cuál es la causa probable?",
+            "ramas": [
+              {
+                "atributo": "Batería descargada",
+                "falla": "Batería sin carga suficiente",
+                "referencia": "Manual Ranger Sec. 4",
+                "soluciones": [
+                  "Cargar o reemplazar la batería.",
+                  "Verificar conexiones de batería y cables.",
+                  "Revisar alternador del motor."
+                ]
+              },
+              {
+                "atributo": "Fusible quemado",
+                "falla": "Fusible del circuito de arranque quemado",
+                "referencia": "Manual Ranger Sec. 4",
+                "soluciones": [
+                  "Inspeccionar y reemplazar fusible quemado.",
+                  "Buscar causa del cortocircuito antes de arrancar."
+                ]
+              },
+              {
+                "atributo": "Motor de arranque defectuoso",
+                "falla": "Motor de arranque no opera",
+                "referencia": "Manual Ranger Sec. 4",
+                "soluciones": [
+                  "Verificar solenoide de arranque.",
+                  "Probar motor de arranque.",
+                  "Reemplazar si es necesario."
+                ]
+              }
+            ]
+          },
+          {
+            "atributo": "El motor gira pero no arranca",
+            "pregunta": "¿Qué más observa?",
+            "ramas": [
+              {
+                "atributo": "Sin combustible",
+                "falla": "Tanque vacío o válvula de combustible cerrada",
+                "referencia": "Manual Ranger Sec. 4",
+                "soluciones": [
+                  "Verificar nivel de combustible.",
+                  "Abrir válvula de combustible.",
+                  "Purgar sistema de combustible si es necesario."
+                ]
+              },
+              {
+                "atributo": "Bujía defectuosa",
+                "falla": "Bujía sucia, húmeda o con separación incorrecta",
+                "referencia": "Manual Ranger Sec. 5",
+                "soluciones": [
+                  "Limpiar o reemplazar bujía.",
+                  "Ajustar separación a 0.030 pulgadas (0.76mm).",
+                  "Verificar cable de bujía."
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "atributo": "Sin salida de soldadura",
+        "pregunta": "¿Qué observa?",
+        "ramas": [
+          {
+            "atributo": "El motor funciona pero no hay salida de soldadura",
+            "pregunta": "¿Los LED o indicadores muestran algo?",
+            "ramas": [
+              {
+                "atributo": "LED de sobrecarga encendido",
+                "falla": "Protección por sobrecarga activada",
+                "referencia": "Manual Ranger Sec. 6",
+                "soluciones": [
+                  "Reducir la corriente de soldadura.",
+                  "Verificar ciclo de trabajo.",
+                  "Dejar enfriar la unidad.",
+                  "Limpiar rejillas de ventilación."
+                ]
+              },
+              {
+                "atributo": "Sin indicadores encendidos",
+                "falla": "Cables de soldadura desconectados o dañados",
+                "referencia": "Manual Ranger Sec. 6",
+                "soluciones": [
+                  "Verificar conexiones de cables de soldadura.",
+                  "Inspeccionar cables por daños.",
+                  "Verificar conexión a tierra.",
+                  "Revisar interruptor de soldadura."
+                ]
+              }
+            ]
+          },
+          {
+            "atributo": "Salida débil o intermitente",
+            "pregunta": "¿Cuándo ocurre?",
+            "ramas": [
+              {
+                "atributo": "Solo con carga pesada",
+                "falla": "Exceso de carga o cables inadecuados",
+                "referencia": "Manual Ranger Sec. 6",
+                "soluciones": [
+                  "Usar cables de mayor calibre.",
+                  "Reducir longitud de cables de soldadura.",
+                  "Verificar configuración de corriente."
+                ]
+              },
+              {
+                "atributo": "Constantemente",
+                "falla": "Problema en generador de soldadura",
+                "referencia": "Manual Ranger Sec. 6",
+                "soluciones": [
+                  "Verificar escobillas del generador.",
+                  "Inspeccionar rotor y estator.",
+                  "Consultar con técnico especializado."
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "atributo": "Problemas con salida auxiliar (tomas de corriente)",
+        "pregunta": "¿Qué problema tiene?",
+        "ramas": [
+          {
+            "atributo": "Sin voltaje en tomas auxiliares",
+            "pregunta": "¿Están todos los receptáculos sin voltaje?",
+            "ramas": [
+              {
+                "atributo": "Sí, ninguno funciona",
+                "falla": "Disyuntor de circuito auxiliar abierto",
+                "referencia": "Manual Ranger Sec. 7",
+                "soluciones": [
+                  "Resetear el disyuntor (circuit breaker).",
+                  "Reducir carga conectada.",
+                  "Verificar causa de sobrecarga."
+                ]
+              },
+              {
+                "atributo": "Solo algunos no funcionan",
+                "falla": "Receptáculo individual dañado",
+                "referencia": "Manual Ranger Sec. 7",
+                "soluciones": [
+                  "Inspeccionar receptáculo específico.",
+                  "Verificar cableado interno.",
+                  "Reemplazar receptáculo dañado."
+                ]
+              }
+            ]
+          },
+          {
+            "atributo": "Voltaje bajo o inestable",
+            "falla": "Sobrecarga o problema en regulador",
+            "referencia": "Manual Ranger Sec. 7",
+            "soluciones": [
+              "Reducir carga total conectada.",
+              "Verificar RPM del motor (deben ser estables).",
+              "Revisar regulador de voltaje.",
+              "Verificar capacitor si aplica."
+            ]
+          }
+        ]
+      },
+      {
+        "atributo": "Motor funciona irregular o se apaga",
+        "pregunta": "¿Cuándo ocurre el problema?",
+        "ramas": [
+          {
+            "atributo": "Se apaga bajo carga",
+            "pregunta": "¿Qué observa?",
+            "ramas": [
+              {
+                "atributo": "Humo negro antes de apagarse",
+                "falla": "Sobrecarga del motor",
+                "referencia": "Manual Ranger Sec. 5",
+                "soluciones": [
+                  "Reducir carga de soldadura.",
+                  "Verificar filtro de aire.",
+                  "Revisar sistema de combustible."
+                ]
+              },
+              {
+                "atributo": "Sin humo, solo se apaga",
+                "falla": "Protección por baja presión de aceite",
+                "referencia": "Manual Ranger Sec. 5",
+                "soluciones": [
+                  "Verificar nivel de aceite del motor.",
+                  "Revisar sensor de presión de aceite.",
+                  "Inspeccionar bomba de aceite."
+                ]
+              }
+            ]
+          },
+          {
+            "atributo": "Funciona irregular en ralentí",
+            "pregunta": "¿Cuál podría ser la causa?",
+            "ramas": [
+              {
+                "atributo": "Combustible viejo o contaminado",
+                "falla": "Combustible de mala calidad",
+                "referencia": "Manual Ranger Sec. 5",
+                "soluciones": [
+                  "Drenar y reemplazar combustible.",
+                  "Limpiar tanque de combustible.",
+                  "Reemplazar filtro de combustible."
+                ]
+              },
+              {
+                "atributo": "Ajuste de carburador",
+                "falla": "Carburador desajustado",
+                "referencia": "Manual Ranger Sec. 5",
+                "soluciones": [
+                  "Ajustar mezcla de ralentí.",
+                  "Limpiar carburador.",
+                  "Verificar bujía."
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "atributo": "Calidad de soldadura deficiente",
+        "pregunta": "¿Qué problema observa en la soldadura?",
+        "ramas": [
+          {
+            "atributo": "Arco inestable",
+            "pregunta": "¿Cuándo es inestable?",
+            "ramas": [
+              {
+                "atributo": "Siempre inestable",
+                "falla": "Cables de soldadura demasiado largos o dañados",
+                "referencia": "Manual Ranger Sec. 6",
+                "soluciones": [
+                  "Usar cables más cortos.",
+                  "Verificar estado de cables.",
+                  "Mejorar conexión a tierra.",
+                  "Verificar pinza de electrodo."
+                ]
+              },
+              {
+                "atributo": "Inestable solo a baja corriente",
+                "falla": "Ajuste de corriente muy bajo",
+                "referencia": "Manual Ranger Sec. 6",
+                "soluciones": [
+                  "Aumentar ajuste de corriente.",
+                  "Usar electrodo de diámetro apropiado.",
+                  "Verificar polaridad."
+                ]
+              }
+            ]
+          },
+          {
+            "atributo": "Penetración inadecuada",
+            "falla": "Corriente muy baja o velocidad muy rápida",
+            "referencia": "Manual Ranger Sec. 6",
+            "soluciones": [
+              "Aumentar corriente de soldadura.",
+              "Reducir velocidad de avance.",
+              "Limpiar material base.",
+              "Usar electrodo apropiado."
+            ]
+          },
+          {
+            "atributo": "Excesiva salpicadura",
+            "falla": "Corriente muy alta o polaridad incorrecta",
+            "referencia": "Manual Ranger Sec. 6",
+            "soluciones": [
+              "Reducir corriente de soldadura.",
+              "Verificar polaridad según electrodo.",
+              "Usar ángulo de electrodo correcto.",
+              "Limpiar superficie de trabajo."
+            ]
+          }
+        ]
+      },
+      {
+        "atributo": "Sobrecalentamiento de la unidad",
+        "pregunta": "¿Cuándo se sobrecalienta?",
+        "ramas": [
+          {
+            "atributo": "Durante uso normal",
+            "pregunta": "¿Qué observa?",
+            "ramas": [
+              {
+                "atributo": "Ventilación bloqueada",
+                "falla": "Rejillas de ventilación obstruidas",
+                "referencia": "Manual Ranger Sec. 8",
+                "soluciones": [
+                  "Limpiar todas las rejillas de ventilación.",
+                  "Asegurar espacio libre alrededor de la unidad.",
+                  "Verificar operación del ventilador interno."
+                ]
+              },
+              {
+                "atributo": "Uso continuo excesivo",
+                "falla": "Excediendo ciclo de trabajo",
+                "referencia": "Manual Ranger Sec. 8",
+                "soluciones": [
+                  "Respetar ciclo de trabajo especificado.",
+                  "Reducir corriente de soldadura.",
+                  "Permitir períodos de enfriamiento."
+                ]
+              }
+            ]
+          },
+          {
+            "atributo": "Incluso con poco uso",
+            "falla": "Ventilador de enfriamiento defectuoso",
+            "referencia": "Manual Ranger Sec. 8",
+            "soluciones": [
+              "Verificar operación del ventilador.",
+              "Limpiar o reemplazar ventilador.",
+              "Revisar sensores de temperatura."
+            ]
+          }
+        ]
+      }
+    ]
   }
 }
