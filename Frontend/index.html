@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- index.html -->
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -26,20 +25,20 @@
         </div>
     </div>
 
-    <div class="container" id="main-container">
+    <div class="container" id="main-container" style="display:none;">
         <header class="header">
             <div class="header-left">
-                <img src="/assets/img/logo_bigtools.png" alt="Big Tools" class="logo">
+                <img src="/static/assets/img/logo_bigtools.png" alt="Big Tools" class="logo">
                 <h1>Asistente Big Tools</h1>
             </div>
             <div class="header-right">
                 <span id="user-display"></span>
                 <button id="reset-button" class="admin-btn">Reiniciar Chat</button>
-                <!-- Botones de administración: sólo visibles por JS -->
+                <!-- Botones de administración: visibles por JS/rol -->
                 <button id="manual-add-button" class="admin-btn" style="display:none;">Agregar máquina manualmente</button>
                 <button id="manual-add-falla" class="admin-btn" style="display:none;">Agregar falla manualmente</button>
                 <button id="manual-add-solucion" class="admin-btn" style="display:none;">Agregar solución manualmente</button>
-                <button id="admin-button" class="admin-btn" style="display:none;" onclick="window.location.href='/admin'">Panel Admin</button>
+                <button id="admin-button" class="admin-btn" style="display:none;">Panel Admin</button>
                 <button id="logout-button" class="admin-btn" style="display:none;">Cerrar Sesión</button>
             </div>
         </header>

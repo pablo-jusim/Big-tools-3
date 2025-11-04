@@ -1,19 +1,18 @@
 /**
  * main.js - Controlador completo 2025
- * Manejo de sesión/autenticación y edición manual con popups
- * Combina los fixes de tu versión original + robustez mejorada
+ * Manejo de sesión, autenticación y edición manual con popups
+ * FIX: Los botones admin/manuales solo funcionan si la sesión ES válida en backend.
  */
 
 document.addEventListener("DOMContentLoaded", () => {
-
     // ---- Elementos del DOM ----
-    const chatWindow    = document.getElementById("chat-window");
-    const resetBtn      = document.getElementById("reset-button");
-    const manualBtn     = document.getElementById("manual-add-button");
-    const manualBtnFalla= document.getElementById("manual-add-falla");
-    const manualBtnSol  = document.getElementById("manual-add-solucion");
-    const adminButton   = document.getElementById("admin-button");
-    const logoutBtn     = document.getElementById("logout-button");
+    const chatWindow     = document.getElementById("chat-window");
+    const resetBtn       = document.getElementById("reset-button");
+    const manualBtn      = document.getElementById("manual-add-button");
+    const manualBtnFalla = document.getElementById("manual-add-falla");
+    const manualBtnSol   = document.getElementById("manual-add-solucion");
+    const adminButton    = document.getElementById("admin-button");
+    const logoutBtn      = document.getElementById("logout-button");
 
     // API y Sesión
     const API_URL  = "http://127.0.0.1:8000/api";
@@ -23,25 +22,36 @@ document.addEventListener("DOMContentLoaded", () => {
     let cum_state = { maquina: null, sintomas: [], falla_actual: null };
     let datosFallaNueva = null, datosFallaExistente = null;
 
-    // === SESIÓN Y LOGIN ===
+    // ========== SESIÓN Y LOGIN / LOGOUT ROBUSTOS =========
     function recuperarSesion() {
         sessionAdmin.token = localStorage.getItem('chatbot_token');
         sessionAdmin.username = localStorage.getItem('chatbot_username');
         sessionAdmin.role = localStorage.getItem('chatbot_role') || 'tecnico';
         return (sessionAdmin.token && sessionAdmin.username);
     }
-
-    if (recuperarSesion()) {
-        mostrarChatbot();
-    } else {
+    function sesionInvalida() {
+        return !(sessionAdmin.token && sessionAdmin.username);
+    }
+    function cerrarSesionTotal(mensaje = null) {
+        localStorage.clear();
+        sessionAdmin = { token: null, username: null, role: null };
+        sessionState = '';
+        chatWindow.innerHTML = '';
+        if (mensaje) alert(mensaje);
         mostrarLogin();
     }
-
+    function forzarReLoginSiSesionInvalida(mensajeExtra = "") {
+        const aviso = "Debes volver a iniciar sesión para usar esta función." + (mensajeExtra ? "\n\n" + mensajeExtra : "");
+        if (confirm(aviso + "\n¿Deseas cerrar la sesión ahora?")) {
+            cerrarSesionTotal();
+            return true;
+        }
+        return false;
+    }
     function mostrarLogin() {
         document.getElementById('login-modal').style.display = 'flex';
         document.getElementById('main-container').style.display = 'none';
     }
-
     function mostrarChatbot() {
         document.getElementById('login-modal').style.display = 'none';
         document.getElementById('main-container').style.display = 'block';
@@ -49,7 +59,69 @@ document.addEventListener("DOMContentLoaded", () => {
         adminButton.style.display = sessionAdmin.role === 'admin' ? 'inline-block' : 'none';
         if (chatWindow.children.length === 0) startChat();
     }
+    function headersAdmin() {
+        return sessionAdmin.token
+            ? { "Content-Type": "application/json", "Authorization": `Bearer ${sessionAdmin.token}` }
+            : { "Content-Type": "application/json" };
+    }
 
+    // ========== VALIDA SESIÓN CON BACKEND ==========
+    async function validarSesionConBackend() {
+        if (sesionInvalida()) return false;
+        try {
+            const res = await fetch(`${API_URL}/admin/stats`, {
+                method: 'GET',
+                headers: headersAdmin()
+            });
+            if (res.status === 401 || res.status === 403) return false;
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    // ========== PROTECCIÓN ROBUSTA DE BOTONES ==========
+    function protegerBotonAsync(boton, mensaje, accionSiValida) {
+        if (!boton) return;
+        boton.onclick = async (e) => {
+            recuperarSesion();
+            const esValida = await validarSesionConBackend();
+            if (!esValida) {
+                cerrarSesionTotal(mensaje);
+                e.preventDefault();
+                return false;
+            }
+            if (typeof accionSiValida === "function") accionSiValida();
+        };
+    }
+    protegerBotonAsync(
+        adminButton,
+        "Para ver el Panel de Administración debes volver a iniciar sesión.",
+        () => { window.location.href = "/admin"; }
+    );
+    protegerBotonAsync(
+        manualBtn,
+        "Debes volver a iniciar sesión para agregar una máquina.",
+        () => abrirVentanaAgregarSimple(sessionState)
+    );
+    protegerBotonAsync(
+        manualBtnFalla,
+        "Debes volver a iniciar sesión para agregar una falla.",
+        abrirVentanaAgregarFalla_Paso1
+    );
+    protegerBotonAsync(
+        manualBtnSol,
+        "Debes volver a iniciar sesión para agregar una solución.",
+        () => {
+            if (sessionState !== 'falla') {
+                alert("Solo puede agregar una solución cuando se ha diagnosticado una falla.");
+                return;
+            }
+            abrirVentanaAgregarSolucion();
+        }
+    );
+
+    // ========== LOGIN Y LOGOUT =========
     document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('username').value;
@@ -76,7 +148,6 @@ document.addEventListener("DOMContentLoaded", () => {
             errorMsg.textContent = 'Error: No se pudo conectar con el servidor';
         }
     });
-
     if (logoutBtn) logoutBtn.addEventListener("click", cerrarSesion);
 
     function cerrarSesion() {
@@ -85,27 +156,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 method: 'POST',
                 headers: {'Authorization': `Bearer ${sessionAdmin.token}` }
             }).catch(() => { });
-            localStorage.clear();
-            sessionAdmin = { token: null, username: null, role: null };
-            sessionState = '';
-            chatWindow.innerHTML = '';
-            mostrarLogin();
+            cerrarSesionTotal();
         }
     }
 
-    function headersAdmin() {
-        return sessionAdmin.token
-            ? { "Content-Type": "application/json", "Authorization": `Bearer ${sessionAdmin.token}` }
-            : { "Content-Type": "application/json" };
-    }
-
-    // === ACTUALIZA VISIBILIDAD BOTONES ADMIN ===
+    // ========== FLUJO PRINCIPAL Y POPUPS IGUAL QUE SIEMPRE =========
     function actualizarBotonManual(etapa) {
         manualBtn.style.display       = "none";
         manualBtnFalla.style.display = "none";
         manualBtnSol.style.display   = "none";
         if (sessionAdmin.role !== "admin") return;
-
         if (etapa === "maquina") {
             manualBtn.textContent = "Agregar máquina manualmente";
             manualBtn.style.display = "inline-block";
@@ -118,7 +178,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // === MENSAJES Y OPCIONES ===
     function addMessage(text, sender = "bot") {
         const messageDiv = document.createElement("div");
         messageDiv.classList.add("message", sender);
@@ -126,7 +185,6 @@ document.addEventListener("DOMContentLoaded", () => {
         chatWindow.appendChild(messageDiv);
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
-
     function addOptions(options, callback) {
         const optionsWrapper = document.createElement("div");
         optionsWrapper.classList.add("bot-options");
@@ -151,8 +209,6 @@ document.addEventListener("DOMContentLoaded", () => {
         chatWindow.appendChild(optionsWrapper);
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
-
-    // Manejo de respuestas del backend
     function handleApiResponse(response) {
         datosFallaNueva = null;
         datosFallaExistente = null;
@@ -185,8 +241,6 @@ document.addEventListener("DOMContentLoaded", () => {
             addOptions(["🔁 Consultar otra máquina"], startChat);
         }
     }
-
-    // ==== FLUJO PRINCIPAL ====
     async function startChat() {
         chatWindow.innerHTML = "";
         sessionState = 'maquina';
@@ -204,13 +258,12 @@ document.addEventListener("DOMContentLoaded", () => {
             addMessage(`⚠️ Error al conectarse con el servidor. ${error.message}`);
         }
     }
-
     async function handleMachineSelection(machineName) {
         cum_state.maquina = machineName;
         cum_state.sintomas = [];
         sessionState = 'sintoma';
         addMessage(`Iniciando diagnóstico para: <strong>${machineName}</strong>`);
-        actualizarBotonManual(sessionState); // Esperar pregunta
+        actualizarBotonManual(sessionState);
         try {
             const response = await fetch(
                 `${API_URL}/diagnosticar/iniciar/${encodeURIComponent(machineName)}`,
@@ -224,7 +277,6 @@ document.addEventListener("DOMContentLoaded", () => {
             addOptions(["🔁 Consultar otra máquina"], startChat);
         }
     }
-
     async function handleOptionSelection(respuesta) {
         cum_state.sintomas.push(respuesta);
         sessionState = 'sintoma';
@@ -251,9 +303,7 @@ document.addEventListener("DOMContentLoaded", () => {
             addOptions(["🔁 Consultar otra máquina"], startChat);
         }
     }
-
-    // === POPUPS DE EDICIÓN MANUAL ADMIN ===
-
+    // === Popups y edición manual, completos ===
     function getAgregarSimpleFormHTML(etapa) {
         let formHTML = `<form id="addForm">`;
         formHTML += "<h4>Contexto Actual:</h4>";
@@ -291,7 +341,6 @@ document.addEventListener("DOMContentLoaded", () => {
         formHTML += `</form>`;
         return formHTML;
     }
-
     function abrirVentanaAgregarSimple(etapa) {
         const popup = window.open("", `Agregar${etapa}`, "width=500,height=600,scrollbars=yes,resizable=yes");
         if (!popup) { alert("Por favor, habilite las ventanas emergentes."); return; }
@@ -349,7 +398,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-
     function abrirVentanaAgregarFalla_Paso1() {
         if (!cum_state.falla_actual || !datosFallaExistente) {
             alert("Para restructurar debe estar viendo una falla existente.");
@@ -390,7 +438,6 @@ document.addEventListener("DOMContentLoaded", () => {
             abrirVentanaRestructura_Paso2(popup);
         });
     }
-
     function abrirVentanaRestructura_Paso2(popup) {
         popup.document.body.innerHTML = "";
         popup.document.title = "Restructurar Falla (Paso 2 de 2)";
@@ -443,7 +490,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-
     function abrirVentanaAgregarSolucion() {
         const popup = window.open("", "AgregarSolucion", "width=500,height=300,scrollbars=yes,resizable=yes");
         if (!popup) { alert("Por favor, habilite las ventanas emergentes."); return; }
@@ -480,20 +526,5 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-
-    // === EVENTOS BOTONES PRINCIPALES ===
     if (resetBtn) resetBtn.addEventListener("click", () => startChat());
-    if (manualBtn) manualBtn.addEventListener("click", () => abrirVentanaAgregarSimple(sessionState));
-    if (manualBtnFalla) manualBtnFalla.addEventListener("click", abrirVentanaAgregarFalla_Paso1);
-    if (manualBtnSol) manualBtnSol.addEventListener("click", () => {
-        if (sessionState !== 'falla') {
-            alert("Solo puede agregar una solución cuando se ha diagnosticado una falla.");
-            return;
-        }
-        abrirVentanaAgregarSolucion();
-    });
-    if (adminButton) adminButton.addEventListener("click", () => window.location.href = "/admin");
-
-    // Inicia el chat al cargar la página si corresponde
-    // (al mostrarChatbot también lo llama)
 });
