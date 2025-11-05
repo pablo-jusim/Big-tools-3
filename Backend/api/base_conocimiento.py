@@ -7,10 +7,10 @@ Compatible con la nueva estructura simplificada de JSON.
 from typing import Dict, Any, List, Optional
 import json
 from pathlib import Path
-from Backend.api.nodo import Nodo
+from api.nodo import Nodo
 
 JSON_LATEST = 1
-DEFAULT_JSON = "Backend/data/base_conocimiento.json"
+DEFAULT_JSON = "data/base_conocimiento.json"
 
 class BaseConocimiento:
     def __init__(self, archivo_json: str = DEFAULT_JSON):
@@ -22,7 +22,6 @@ class BaseConocimiento:
     # ------------ CARGA Y GUARDADO ----------------
     def from_json(self, filename: Path):
         if not filename.exists():
-            print(f"Archivo {filename} no encontrado.")
             self.maquinas = {}
             return self
         with open(filename, 'r', encoding='utf8') as f:
@@ -41,6 +40,7 @@ class BaseConocimiento:
                 continue
             arbol_dict['nombre'] = nombre_maquina
             self.maquinas[nombre_maquina] = Nodo.from_dict(arbol_dict)
+            print('maquinas', self.maquinas)
         return self
 
     def to_json(self, filename: Optional[Path] = None):

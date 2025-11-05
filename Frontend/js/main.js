@@ -1,37 +1,171 @@
 /**
- * main.js - Controlador principal para la interfaz de chat del sistema experto Big Tools.
- * Permite agregar máquinas, síntomas terminales, fallas y soluciones bajo reglas específicas.
- * La referencia de toda falla ingresada desde el frontend será siempre "Ingresado por usuario" 
- * o "Ingresado por usuario: [texto]" si el usuario provee un texto.
+ * main.js - Controlador completo 2025
+ * Manejo de sesión, autenticación y edición manual con popups
+ * FIX: Los botones admin/manuales solo funcionan si la sesión ES válida en backend.
  */
 
 document.addEventListener("DOMContentLoaded", () => {
-
     // ---- Elementos del DOM ----
-    const chatWindow    = document.getElementById("chat-window");
-    const resetBtn      = document.getElementById("reset-button");
-    const manualBtn     = document.getElementById("manual-add-button");
-    const manualBtnFalla= document.getElementById("manual-add-falla");
-    const manualBtnSol  = document.getElementById("manual-add-solucion");
-    const adminButton   = document.getElementById("admin-button");
+    const chatWindow     = document.getElementById("chat-window");
+    const resetBtn       = document.getElementById("reset-button");
+    const manualBtn      = document.getElementById("manual-add-button");
+    const manualBtnFalla = document.getElementById("manual-add-falla");
+    const manualBtnSol   = document.getElementById("manual-add-solucion");
+    const adminButton    = document.getElementById("admin-button");
+    const logoutBtn      = document.getElementById("logout-button");
 
     // API y Sesión
     const API_URL  = "http://127.0.0.1:8000/api";
     const ID_SESION = "default_user";
-
-    // ---- ESTADO ----
-    let sessionState = '';
+    let sessionAdmin = { token: null, username: null, role: null };
+    let sessionState = '';   // "maquina", "sintoma", "falla"
     let cum_state = { maquina: null, sintomas: [], falla_actual: null };
-    let datosFallaNueva = null;    // info nueva falla para restructuración
-    let datosFallaExistente = null; // info falla "vieja" (la que estaba)
+    let datosFallaNueva = null, datosFallaExistente = null;
 
-    /**
-     * Actualiza visibilidad y títulos de los botones manuales según la etapa.
-     */
+    // ========== SESIÓN Y LOGIN / LOGOUT ROBUSTOS =========
+    function recuperarSesion() {
+        sessionAdmin.token = localStorage.getItem('chatbot_token');
+        sessionAdmin.username = localStorage.getItem('chatbot_username');
+        sessionAdmin.role = localStorage.getItem('chatbot_role') || 'tecnico';
+        return (sessionAdmin.token && sessionAdmin.username);
+    }
+    function sesionInvalida() {
+        return !(sessionAdmin.token && sessionAdmin.username);
+    }
+    function cerrarSesionTotal(mensaje = null) {
+        localStorage.clear();
+        sessionAdmin = { token: null, username: null, role: null };
+        sessionState = '';
+        chatWindow.innerHTML = '';
+        if (mensaje) alert(mensaje);
+        mostrarLogin();
+    }
+    function forzarReLoginSiSesionInvalida(mensajeExtra = "") {
+        const aviso = "Debes volver a iniciar sesión para usar esta función." + (mensajeExtra ? "\n\n" + mensajeExtra : "");
+        if (confirm(aviso + "\n¿Deseas cerrar la sesión ahora?")) {
+            cerrarSesionTotal();
+            return true;
+        }
+        return false;
+    }
+    function mostrarLogin() {
+        document.getElementById('login-modal').style.display = 'flex';
+        document.getElementById('main-container').style.display = 'none';
+    }
+    function mostrarChatbot() {
+        document.getElementById('login-modal').style.display = 'none';
+        document.getElementById('main-container').style.display = 'block';
+        document.getElementById('user-display').textContent = `Usuario: ${sessionAdmin.username}`;
+        adminButton.style.display = sessionAdmin.role === 'admin' ? 'inline-block' : 'none';
+        if (chatWindow.children.length === 0) startChat();
+    }
+    function headersAdmin() {
+        return sessionAdmin.token
+            ? { "Content-Type": "application/json", "Authorization": `Bearer ${sessionAdmin.token}` }
+            : { "Content-Type": "application/json" };
+    }
+
+    // ========== VALIDA SESIÓN CON BACKEND ==========
+    async function validarSesionConBackend() {
+        if (sesionInvalida()) return false;
+        try {
+            const res = await fetch(`${API_URL}/admin/stats`, {
+                method: 'GET',
+                headers: headersAdmin()
+            });
+            if (res.status === 401 || res.status === 403) return false;
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    // ========== PROTECCIÓN ROBUSTA DE BOTONES ==========
+    function protegerBotonAsync(boton, mensaje, accionSiValida) {
+        if (!boton) return;
+        boton.onclick = async (e) => {
+            recuperarSesion();
+            const esValida = await validarSesionConBackend();
+            if (!esValida) {
+                cerrarSesionTotal(mensaje);
+                e.preventDefault();
+                return false;
+            }
+            if (typeof accionSiValida === "function") accionSiValida();
+        };
+    }
+    protegerBotonAsync(
+        adminButton,
+        "Para ver el Panel de Administración debes volver a iniciar sesión.",
+        () => { window.location.href = "/admin"; }
+    );
+    protegerBotonAsync(
+        manualBtn,
+        "Debes volver a iniciar sesión para agregar una máquina.",
+        () => abrirVentanaAgregarSimple(sessionState)
+    );
+    protegerBotonAsync(
+        manualBtnFalla,
+        "Debes volver a iniciar sesión para agregar una falla.",
+        abrirVentanaAgregarFalla_Paso1
+    );
+    protegerBotonAsync(
+        manualBtnSol,
+        "Debes volver a iniciar sesión para agregar una solución.",
+        () => {
+            if (sessionState !== 'falla') {
+                alert("Solo puede agregar una solución cuando se ha diagnosticado una falla.");
+                return;
+            }
+            abrirVentanaAgregarSolucion();
+        }
+    );
+
+    // ========== LOGIN Y LOGOUT =========
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorMsg = document.getElementById('login-error');
+        try {
+            const response = await fetch(`${API_URL}/login_admin`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username, password })
+            });
+            const data = await response.json();
+            if (response.ok && data.token) {
+                localStorage.setItem('chatbot_token', data.token);
+                localStorage.setItem('chatbot_username', username);
+                localStorage.setItem('chatbot_role', data.role || 'tecnico');
+                errorMsg.textContent = '';
+                recuperarSesion();
+                mostrarChatbot();
+            } else {
+                errorMsg.textContent = 'Error: Usuario o contraseña incorrectos';
+            }
+        } catch (error) {
+            errorMsg.textContent = 'Error: No se pudo conectar con el servidor';
+        }
+    });
+    if (logoutBtn) logoutBtn.addEventListener("click", cerrarSesion);
+
+    function cerrarSesion() {
+        if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+            fetch(`${API_URL}/logout_admin`, {
+                method: 'POST',
+                headers: {'Authorization': `Bearer ${sessionAdmin.token}` }
+            }).catch(() => { });
+            cerrarSesionTotal();
+        }
+    }
+
+    // ========== FLUJO PRINCIPAL Y POPUPS IGUAL QUE SIEMPRE =========
     function actualizarBotonManual(etapa) {
-        manualBtn.style.display      = "none";
+        manualBtn.style.display       = "none";
         manualBtnFalla.style.display = "none";
         manualBtnSol.style.display   = "none";
+        if (sessionAdmin.role !== "admin") return;
         if (etapa === "maquina") {
             manualBtn.textContent = "Agregar máquina manualmente";
             manualBtn.style.display = "inline-block";
@@ -44,7 +178,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    /** Agrega un mensaje al chat */
     function addMessage(text, sender = "bot") {
         const messageDiv = document.createElement("div");
         messageDiv.classList.add("message", sender);
@@ -52,8 +185,6 @@ document.addEventListener("DOMContentLoaded", () => {
         chatWindow.appendChild(messageDiv);
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
-
-    /** Agrega botones de opciones al chat y configura el callback */
     function addOptions(options, callback) {
         const optionsWrapper = document.createElement("div");
         optionsWrapper.classList.add("bot-options");
@@ -64,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
             addOptions(["🔁 Consultar otra máquina"], startChat);
             return;
         }
-        options.forEach((opt) => {
+        options.forEach(opt => {
             const btn = document.createElement("button");
             btn.classList.add("option-btn");
             btn.textContent = opt;
@@ -78,10 +209,6 @@ document.addEventListener("DOMContentLoaded", () => {
         chatWindow.appendChild(optionsWrapper);
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
-
-    /**
-     * Procesa la respuesta del backend y actualiza el flujo conversacional.
-     */
     function handleApiResponse(response) {
         datosFallaNueva = null;
         datosFallaExistente = null;
@@ -94,11 +221,10 @@ document.addEventListener("DOMContentLoaded", () => {
         else if (response.falla && response.soluciones) {
             let solHTML = `<strong>Falla detectada:</strong> ${response.falla}<br>`;
             solHTML += "<strong>Soluciones sugeridas:</strong><ul>";
-            response.soluciones.forEach((sol) => { solHTML += `<li>${sol}</li>`; });
+            response.soluciones.forEach(sol => { solHTML += `<li>${sol}</li>`; });
             solHTML += "</ul>";
-            if (response.referencia) {
+            if (response.referencia)
                 solHTML += `<em>(Ref: ${response.referencia})</em>`;
-            }
             addMessage(solHTML);
             sessionState = "falla";
             cum_state.falla_actual = response.falla;
@@ -115,8 +241,6 @@ document.addEventListener("DOMContentLoaded", () => {
             addOptions(["🔁 Consultar otra máquina"], startChat);
         }
     }
-
-    /** Reinicia el chat y carga las máquinas */
     async function startChat() {
         chatWindow.innerHTML = "";
         sessionState = 'maquina';
@@ -134,13 +258,12 @@ document.addEventListener("DOMContentLoaded", () => {
             addMessage(`⚠️ Error al conectarse con el servidor. ${error.message}`);
         }
     }
-
-    /** Selecciona máquina y arranca el flujo de opciones */
     async function handleMachineSelection(machineName) {
         cum_state.maquina = machineName;
+        cum_state.sintomas = [];
         sessionState = 'sintoma';
         addMessage(`Iniciando diagnóstico para: <strong>${machineName}</strong>`);
-        actualizarBotonManual("cargando");
+        actualizarBotonManual(sessionState);
         try {
             const response = await fetch(
                 `${API_URL}/diagnosticar/iniciar/${encodeURIComponent(machineName)}`,
@@ -154,12 +277,10 @@ document.addEventListener("DOMContentLoaded", () => {
             addOptions(["🔁 Consultar otra máquina"], startChat);
         }
     }
-
-    /** Avanza el árbol según la opción elegida por el usuario */
     async function handleOptionSelection(respuesta) {
         cum_state.sintomas.push(respuesta);
         sessionState = 'sintoma';
-        actualizarBotonManual("cargando");
+        actualizarBotonManual(sessionState);
         if (!cum_state.maquina) {
             addMessage("⚠️ Error de sesión (no hay máquina). Por favor, reinicia.");
             startChat();
@@ -182,12 +303,7 @@ document.addEventListener("DOMContentLoaded", () => {
             addOptions(["🔁 Consultar otra máquina"], startChat);
         }
     }
-
-    /**
-     * Construye HTML para el formulario de agregar máquina o síntoma.
-     * @param {string} etapa - "maquina" o "sintoma"
-     * @returns {string} HTML
-     */
+    // === Popups y edición manual, completos ===
     function getAgregarSimpleFormHTML(etapa) {
         let formHTML = `<form id="addForm">`;
         formHTML += "<h4>Contexto Actual:</h4>";
@@ -200,7 +316,6 @@ document.addEventListener("DOMContentLoaded", () => {
             formHTML += `<p><strong>Síntomas seguidos:</strong></p><ol>${cum_state.sintomas.map(s => `<li>${s}</li>`).join('')}</ol>`;
         }
         formHTML += "<hr><h4>Datos a Agregar:</h4>";
-
         if (etapa === "maquina") {
             formHTML += `<label for="nombre">Nombre de la nueva máquina:</label><br>`;
             formHTML += `<input type="text" id="nombre" name="nombre" required style="width: 90%;"><br><br>`;
@@ -226,23 +341,15 @@ document.addEventListener("DOMContentLoaded", () => {
         formHTML += `</form>`;
         return formHTML;
     }
-
-    /**
-     * Abre la ventana emergente para agregar máquina/síntoma con formulario y lógica de referencia.
-     * @param {string} etapa - "maquina" o "sintoma"
-     */
     function abrirVentanaAgregarSimple(etapa) {
         const popup = window.open("", `Agregar${etapa}`, "width=500,height=600,scrollbars=yes,resizable=yes");
         if (!popup) { alert("Por favor, habilite las ventanas emergentes."); return; }
         popup.document.write("<html><head><title>Agregar Conocimiento</title></head><body>");
         popup.document.write("<h2>Agregar Nuevo Conocimiento</h2>");
         popup.document.write(getAgregarSimpleFormHTML(etapa));
-
         popup.document.getElementById("addForm").addEventListener("submit", async (e) => {
             e.preventDefault();
-            let url = "";
-            let body = {};
-            // Lógica para construir referencia final
+            let url = "", body = {};
             function referenciaFinal(userRefValue) {
                 let userValue = userRefValue ? userRefValue.trim() : "";
                 return userValue ? ("Ingresado por usuario: " + userValue) : "Ingresado por usuario";
@@ -255,7 +362,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 let nombre   = popup.document.getElementById("nombre").value;
                 let refUser  = popup.document.getElementById("referencia").value;
                 let referencia = referenciaFinal(refUser);
-
                 body = {
                     nombre: nombre,
                     primer_rama: {
@@ -279,7 +385,7 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 const res = await fetch(url, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: headersAdmin(),
                     body: JSON.stringify(body)
                 });
                 const data = await res.json();
@@ -292,8 +398,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-
-    /** Abre la ventana para agregar una nueva falla en dos pasos (con restructuración si hace falta) */
     function abrirVentanaAgregarFalla_Paso1() {
         if (!cum_state.falla_actual || !datosFallaExistente) {
             alert("Para restructurar debe estar viendo una falla existente.");
@@ -334,10 +438,8 @@ document.addEventListener("DOMContentLoaded", () => {
             abrirVentanaRestructura_Paso2(popup);
         });
     }
-
-    /** Abre ventana paso 2 (pregunta diferenciadora) para restructuración tras agregar nueva falla. */
     function abrirVentanaRestructura_Paso2(popup) {
-        popup.document.body.innerHTML = ""; 
+        popup.document.body.innerHTML = "";
         popup.document.title = "Restructurar Falla (Paso 2 de 2)";
         let formHTML = `<h2>Restructurar Falla (Paso 2 de 2)</h2>`;
         formHTML += "<h4>Contexto Actual:</h4>";
@@ -356,7 +458,6 @@ document.addEventListener("DOMContentLoaded", () => {
         formHTML += `<br><button type="submit">Guardar restructuración</button>`;
         formHTML += `</form>`;
         popup.document.body.innerHTML = formHTML;
-
         popup.document.getElementById("restructuraForm").addEventListener("submit", async (e) => {
             e.preventDefault();
             const body = {
@@ -374,7 +475,7 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 const res = await fetch(url, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: headersAdmin(),
                     body: JSON.stringify(body)
                 });
                 const data = await res.json();
@@ -389,11 +490,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-
-    /**
-     * Abre la ventana de agregar solución a una falla.
-     * La solución es terminal para el nodo actual (falla).
-     */
     function abrirVentanaAgregarSolucion() {
         const popup = window.open("", "AgregarSolucion", "width=500,height=300,scrollbars=yes,resizable=yes");
         if (!popup) { alert("Por favor, habilite las ventanas emergentes."); return; }
@@ -417,37 +513,18 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 const res = await fetch(url, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: headersAdmin(),
                     body: JSON.stringify(body)
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || "Error desconocido");
                 addMessage(`✅ ${data.message}`, "bot");
                 popup.close();
+                startChat();
             } catch (error) {
                 popup.alert(`Error al guardar: ${error.message}`);
             }
         });
     }
-
-    // ---- INICIO Y EVENTOS ----
-
-    resetBtn.addEventListener("click", startChat);
-    manualBtn.addEventListener("click", () => {
-        abrirVentanaAgregarSimple(sessionState);
-    });
-    manualBtnFalla.addEventListener("click", () => {
-        abrirVentanaAgregarFalla_Paso1();
-    });
-    manualBtnSol.addEventListener("click", () => {
-        if (sessionState !== 'falla') {
-            alert("Solo puede agregar una solución cuando se ha diagnosticado una falla.");
-            return;
-        }
-        abrirVentanaAgregarSolucion();
-    });
-
-    // adminButton.addEventListener("click", () => { /* ... */ });
-    startChat();
-
-}); // FIN DEL DOMContentLoaded
+    if (resetBtn) resetBtn.addEventListener("click", () => startChat());
+});

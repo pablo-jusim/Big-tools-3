@@ -1,11 +1,15 @@
 """
 app.py
-Entrada principal de la API del sistema experto.
+Versión integrada: sirve API, frontend y archivos estáticos con CORS.
 """
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from Backend.api.routes import router
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from pathlib import Path
+
+from api.routes import router
 
 # ---------------------------------------------------------------------
 # Instancia de FastAPI
@@ -21,28 +25,41 @@ app = FastAPI(
 # Configuración CORS
 # ---------------------------------------------------------------------
 
-origins = [
-    "*",  # Permite cualquier origen, útil para desarrollo. Ajustar en producción.
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],   # Permite cualquier origen, útil para desarrollo.
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # ---------------------------------------------------------------------
-# Inclusión de rutas
+# Inclusión de rutas de la API
 # ---------------------------------------------------------------------
 
 app.include_router(router)
 
 # ---------------------------------------------------------------------
-# Ruta raíz opcional
+# Configuración de archivos estáticos del Frontend
+# ---------------------------------------------------------------------
+
+# Ajusta estas rutas si la estructura de tu proyecto cambia
+frontend_path = Path(__file__).parent.parent / "Frontend"
+manuales_path = Path(__file__).parent / "data" / "manuales_pdf"
+
+app.mount("/static", StaticFiles(directory=str(frontend_path)), name="static")
+app.mount("/manuales", StaticFiles(directory=str(manuales_path)), name="manuales")
+
+# ---------------------------------------------------------------------
+# Rutas para servir páginas del frontend (solo si necesitas estas URLs)
 # ---------------------------------------------------------------------
 
 @app.get("/")
 def root():
-    return {"mensaje": "API del Sistema Experto activa"}
+    """Devuelve la página principal de tu frontend."""
+    return FileResponse(str(frontend_path / "index.html"))
+
+@app.get("/admin")
+def admin():
+    """Devuelve la página de administración si la tienes."""
+    return FileResponse(str(frontend_path / "admin.html"))

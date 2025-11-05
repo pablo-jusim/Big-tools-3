@@ -1,0 +1,55 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║            BIG TOOLS - SISTEMA EXPERTO                        ║
+║            Guía de Uso Rápido                                 ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+┌───────────────────────────────────────────────────────────────┐
+│  INICIO RÁPIDO                                                │
+└───────────────────────────────────────────────────────────────┘
+
+1. Ejecuta: run.bat (Windows) o run_simple.py
+2. Abre en tu navegador: Frontend/index.html
+3. Ingresa tus credenciales
+4. Listo! Ya puedes usar el chatbot
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  CREDENCIALES DEL SISTEMA                                     │
+└───────────────────────────────────────────────────────────────┘
+
+ADMINISTRADOR (Acceso completo):
+  Usuario: admin
+  Contraseña: 1234
+  Permisos: Chatbot + Dashboard
+
+TECNICO (Solo chatbot):
+  Usuario: tecnico
+  Contraseña: 1234
+  Permisos: Solo chatbot
+
+Nota: El boton "Modo Administracion" solo aparece para admins
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  MAQUINAS DISPONIBLES                                         │
+└───────────────────────────────────────────────────────────────┘
+
+- Hidrolavadora Karcher
+- Generador Generac Guardian
+- Motor Cummins
+- Soldadora Miller Ranger 305D
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  DOCUMENTACION                                                │
+└───────────────────────────────────────────────────────────────┘
+
+Ver: README.md
+
+
+╔═══════════════════════════════════════════════════════════════╗
+║  ¿Problemas? Verifica que Python esté instalado              ║
+╚═══════════════════════════════════════════════════════════════╝
+
